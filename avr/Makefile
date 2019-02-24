@@ -5,7 +5,7 @@ PROJ		= aes-avr
 TARGET		= atmega328p
 CPUFREQ		= 16000000
 WIRE		= arduino
-DEVICE		= /dev/ttyACM0
+DEVICE		= /dev/ttyACM1
 CC		= avr-gcc
 OBJCOPY		= avr-objcopy
 AR		= avr-ar
@@ -14,9 +14,7 @@ AVRDUDE		= avrdude
 
 CFLAGS  	= -DCTR -Wall -Ofast -mmcu=$(TARGET) -DF_CPU=$(CPUFREQ)
 
-# Uncomment this line instead to use the slower C version
-# OBJS		= obj/chacha_core_c.o obj/chacha20.o
-OBJS 		= obj/aes.o obj/aes.o
+OBJS 		= obj/aes.o
 
 $(PROJ):	test.c ser_print.c obj/$(PROJ).a
 		$(CC) $(CFLAGS) $^ -o $@

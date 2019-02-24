@@ -27,6 +27,9 @@
 // Test unit for AES-128 ECB and CTR mode
 // Odzhan
 
+#include <avr/io.h>
+#include <avr/interrupt.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -85,53 +88,107 @@ void bin2hex(char *s, void *p, int len) {
     ser_print("\n");
 }
 
-int main (void)
+uint64_t tick_ticks;
+static uint8_t tick_init_done = 0;
+
+static void tick_init(void) {
+    tick_ticks = 0;
+#ifdef __AVR_ATmega128__
+    TCCR1B = (1 << CS12);
+    TIMSK |= (1 << TOIE1);
+#else
+    TCCR0B = (1 << CS00);
+    TCCR1B = (1 << CS12);
+    TIMSK1 |= (1 << TOIE1);
+#endif
+    TCNT0 = 0;
+    TCNT1 = 0;
+    sei(); // Enable global interrupts
+    tick_init_done = 1;
+}
+
+// interrupt handler on TIMER1 overflow
+
+ISR(TIMER1_OVF_vect)
 {
-  int     i, equ;
-  uint8_t data[16], key[AES_KEY_LEN];
-  
-  ser_print ("\n**** AES-128 ECB Test ****\n");
-  
-  // ecb tests
-  for (i=0; i<4; i++) {
-    memcpy(data, ecb_plain[i], 16);
-    memcpy(key, ecb_keys[i], AES_KEY_LEN);
+    tick_ticks += (1UL << 24);
+}
+
+unsigned long long tick_cycles(void)
+{
+    if (!tick_init_done)
+        tick_init();
+
+    return tick_ticks | (((uint64_t) TCNT1) << 8) | ((uint64_t) TCNT0);
+}
+
+int main (void) {
+    int       run, i, equ;
+    uint8_t   data[16], key[AES_KEY_LEN];
+    uint64_t  t;
     
-    aes_ecb(key, data);
+    ser_print ("\n**** AES-128 ECB Test ****\n");
     
-    equ=(memcmp(data, ecb_cipher[i],16)==0);
-    
-    bin2hex("key", key, 16);
-    bin2hex("cipher", data, 16);
-    
-    ser_print("AES-128 ECB Test #");
-    ser_dec64(i+1); 
-    ser_print(" : ");
-    if(equ) ser_print("OK\n\n"); else ser_print("FAILED.\n\n");
-  }
-  
-  #ifdef CTR
-    ser_print ("\n**** AES-128 CTR Test ****\n");
-    // ctr tests
-    bin2hex("key", ctr_key, 16);
+    // ecb tests
+    for (i=0; i<4; i++) {
+      memcpy(data, ecb_plain[i], 16);
+      memcpy(key, ecb_keys[i], AES_KEY_LEN);
       
-    for(i=0;i<4;i++){
-      bin2hex("ctr", ctr_tv, 16);
-      bin2hex("plain", ctr_plain[i], 16);
+      aes_ecb(key, data);
       
-      memcpy(data, ctr_plain[i], 16);
+      equ=(memcmp(data, ecb_cipher[i],16)==0);
       
-      aes_ctr(16, ctr_tv, data, ctr_key);
-      equ=(memcmp(data,ctr_cipher[i],16)==0);
-      
+      bin2hex("key", key, 16);
       bin2hex("cipher", data, 16);
       
-      ser_print("AES-128 CTR Test #");
+      ser_print("AES-128 ECB Test #");
       ser_dec64(i+1); 
       ser_print(" : ");
       if(equ) ser_print("OK\n\n"); else ser_print("FAILED.\n\n");
     }
-  #endif
-  ser_end();
-  return 0;
+    
+    #ifdef CTR
+      ser_print ("\n**** AES-128 CTR Test ****\n");
+      // ctr tests
+      bin2hex("key", ctr_key, 16);
+        
+      for(i=0;i<4;i++){
+        bin2hex("ctr", ctr_tv, 16);
+        bin2hex("plain", ctr_plain[i], 16);
+        
+        memcpy(data, ctr_plain[i], 16);
+        
+        aes_ctr(16, ctr_tv, data, ctr_key);
+        equ=(memcmp(data,ctr_cipher[i],16)==0);
+        
+        bin2hex("cipher", data, 16);
+        
+        ser_print("AES-128 CTR Test #");
+        ser_dec64(i+1); 
+        ser_print(" : ");
+        if(equ) ser_print("OK\n\n"); else ser_print("FAILED.\n\n");
+      }
+    #endif
+  
+    // time AES-128
+    tick_init();
+
+    for (run = 0; run < 10; run++) {
+
+        ser_print("Run #");
+        ser_hex8(run);
+        ser_print(" ");
+
+        t = tick_cycles();
+        for (i = 1 << run; i > 0; i--) {
+            aes_ecb(key, data);
+        }
+        t = tick_cycles() - t;
+        t >>= run + 2;
+
+        ser_dec64(t);
+        ser_print(" ticks / block\n");
+    }
+    ser_end();
+    return 0;
 }
