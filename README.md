@@ -2,7 +2,7 @@
 
 <p>AES-dust is a compact Implementation of the AES block cipher with support for 128 and 256-bit keys. The modes of encryption supported are Counter (CTR) and Electronic Code Book (ECB).</p>
 
-<p>All code is intentionally optimized for size rather than speed making it suitable for resource constrained environments.</p>
+<p>All code is intentionally optimized for size rather than speed making it suitable for resource constrained environments. It has been tested successfully on 32 and 64-bit architectures (running in little-endian mode) and on an Arduino Uno.</p>
 
 <h4>Files</h4>
 

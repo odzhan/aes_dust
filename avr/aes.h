@@ -27,7 +27,7 @@
 #ifndef AES_H
 #define AES_H
 
-#define AES_INT_LEN 4   // 1 = 8-bit, 4 for anything else
+#define AES_INT_LEN 1   // 1 = 8-bit, 4 for anything else
 #define AES_KEY_LEN 16  // 16 = 128-bit, 32 = 256-bit
 #define AES_BLK_LEN 16  // always 16 for 128-bit blocks
 
