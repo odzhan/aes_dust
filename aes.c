@@ -94,7 +94,7 @@
       
       // copy 128-bit plain text + 128-bit master key to x
       for(i=0;i<AES_BLK_LEN;i++) {
-        x[i]=s[i], k[i]=((u32*)mk)[i];
+        x[i]=s[i], k[i]=((u8*)mk)[i];
       }
 
       for(;;) {
