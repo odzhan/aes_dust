@@ -35,6 +35,10 @@
 #error "AES-256 for 8-bit CPUs is currently unsupported."
 #endif
 
+#if AES_KEY_LEN == 32 && defined(ASM)
+#error "AES-256 is not supported by the assembly code."
+#endif
+
 typedef unsigned char u8;
 typedef char s8;
 
@@ -49,9 +53,14 @@ typedef char s8;
 extern "C" { 
 #endif
 
+  #ifdef ASM
+    // s should point to 128-bit data and 128-bit key
+    void aes_ecb_asm(void *s);
+  #else
   // mk should point to a 128-bit or 256-bit key
   // data should point to a 128-bit block of plaintext to encrypt
   void aes_ecb(void *mk, void *data);
+  #endif
   
   // len is the amount of bytes to encrypt
   // ctr is the 128-bit counter and nonce

@@ -30,7 +30,7 @@
     .arch armv7-a
     .text
 
-    .global E
+    .global aes_ecb_asm
 
 // *****************************
 // Multiplication over GF(2**8)
@@ -82,9 +82,9 @@ SB2:
     pop      {pc}
     
 // *****************************
-// void E(void *s);
+// void aes_ecb(void *s);
 // *****************************
-E:
+aes_ecb_asm:
     push    {r0-r12,lr}
     sub     sp, sp, #32
     

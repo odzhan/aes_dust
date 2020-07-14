@@ -34,7 +34,7 @@
 #include "aes.h"
 
 #if AES_KEY_LEN == 32
-#error "This source only performs tests for AES-128 in ECB mode"
+#error "Only AES-128 is supported by this test unit. Set AES_KEY_LEN in aes.h to 16."
 #endif
 
 // 4 128-bit keys

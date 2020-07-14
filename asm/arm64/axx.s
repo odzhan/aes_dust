@@ -30,7 +30,7 @@
     .arch armv8-a
     .text
 
-    .global E
+    .global aes_ecb
     
 // *****************************
 // Multiplication over GF(2**8)
@@ -81,9 +81,9 @@ SB2:
     ret
     
 // *****************************
-// void E(void *s);
+// void aes_ecb_asm(void *s);
 // *****************************
-E:
+aes_ecb_asm:
     str      x30, [sp, -16]!
     sub      sp, sp, 32
     
