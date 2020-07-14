@@ -30,9 +30,11 @@
 //
 // -----------------------------------------------
 //
+    .arch generic64
     .intel_syntax noprefix
     
     .global aes_ecb_asm
+    .global _aes_ecb_asm
     
     .ifdef WIN
       .equ arg_0, rcx
@@ -45,11 +47,12 @@
       .equ arg_2, rdx
       .equ arg_3, rcx
     .endif
-  
+
 // *****************************
 // void aes_ecb_asm(void *s)
 // *****************************
 aes_ecb_asm:
+_aes_ecb_asm:
     push   rax
     push   rbx
     push   rcx
