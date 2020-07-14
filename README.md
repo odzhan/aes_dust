@@ -15,30 +15,30 @@
   </tr>
   <tr>
     <td>aes.c</td>
-    <td>AES-128,AES-256 in C for 8-bit, 32-bit and 64-bit architectures.</td>
+    <td>AES-128 and AES-256 in C for 8-bit, 32-bit and 64-bit architectures.</td>
   </tr>
   <tr>
-    <td>test.c</td>
-    <td>Monte Carlo test for AES-128, AES-256 in ECB mode.</td>
+    <td>mctest.c</td>
+    <td>Monte Carlo test for AES-128 and AES-256 in ECB mode.</td>
   </tr>
   <tr>
-    <td>test2.c</td>
-    <td>Simple test unit for AES-128, AES-256 in ECB and CTR mode.</td>
+    <td>test128.c</td>
+    <td>Test unit for AES-128 in ECB and CTR mode.</td>
   </tr>
   <tr>
-    <td>asm/ax.asm</td>
+    <td>asm/x86/ax.s</td>
     <td>AES-128 in x86 assembly.</td>
   </tr>
   <tr>
-    <td>asm/axx.asm</td>
+    <td>asm/amd64/ax.s</td>
     <td>AES-128 in AMD64 assembly.</td>
   </tr>
   <tr>
-    <td>asm/ax.s</td>
+    <td>asm/arm32/ax.s</td>
     <td>AES-128 in ARM32 assembly.</td>
   </tr>
   <tr>
-    <td>asm/axx.s</td>
+    <td>asm/arm64/ax.s</td>
     <td>AES-128 in ARM64 assembly.</td>
   </tr>
 </table>
