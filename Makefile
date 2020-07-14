@@ -13,20 +13,32 @@ endif
 mc: clean
 	gcc -Wall -Os mctest.c aes.c -omctest
 ecb: clean
-	gcc -Wall -Os test128.c aes.c -otest128
+	gcc -Wall -fPIC -DCTR -Os -c aes.c
+	gcc -Wall -Os test128.c aes.o -otest128
+	ar rcs libaes.a aes.o
+	gcc -Wall -shared -o libaes.so aes.o
 ctr: clean
-	gcc -Wall -DCTR -Os test128.c aes.c -otest128
+	gcc -Wall -fPIC -DCTR -Os -c aes.c
+	gcc -Wall -DCTR -Os test128.c aes.o -otest128
+	ar rcs libaes.a aes.o
+	gcc -Wall -shared -o libaes.so aes.o
 ecb_asm: clean
 	as $(SRC) -oax.o
+	ar rcs libaes.a ax.o
+	gcc -Wall -fPIC -shared -o libaes.so ax.o
 	gcc -Wall -DASM -Os mctest.c ax.o -omctest	
 	gcc -Wall -DASM -Os test2.c ax.o -otest2
 ctr_asm: clean
 	as --defsym CTR=1 $(SRC) -oax.o
+	ar rcs libaes.a ax.o
+	gcc -Wall -shared -o libaes.so ax.o
 	gcc -Wall -fPIC -DASM -Os mctest.c ax.o -omctest	
 	gcc -Wall -fPIC -DCTR -DASM -Os test2.c ax.o -otest2
 dyn_asm: clean
 	as --defsym DYNAMIC=1 --defsym CTR=1 $(SRC) -oax.o
+	ar rcs libaes.a ax.o
+	gcc -Wall -shared -o libaes.so ax.o
 	gcc -Wall -fPIC -DASM -Os mctest.c ax.o -omctest	
 	gcc -Wall -fPIC -DCTR -DASM -Os test128.c ax.o -otest128	
 clean:
-	rm -rf *.o mctest test128
+	rm -rf ax.o aes.o mctest.o test128.o mctest test128 libaes.a libaes.so
