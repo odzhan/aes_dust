@@ -27,7 +27,7 @@
 ; -----------------------------------------------
 ; AES-128 Encryption in x86 assembly
 ;
-; size: 205 bytes for ECB, 272 for CTR
+; size: 188 bytes for ECB, 255 for CTR
 ;
 ; global calls use cdecl convention
 ;
@@ -35,8 +35,11 @@
 
     bits 32
     
-    global _aes_ecb_asm
-    global aes_ecb_asm
+    %ifndef BIN
+      global _aes_ecb_asm
+      global aes_ecb_asm
+    %endif
+    
     ; *****************************
     ; void aes_ecb_asm(void *s);
     ; *****************************
@@ -47,7 +50,7 @@ aes_ecb_asm:
     mul    ecx                ; eax = 0, edx = 0
     inc    eax                ; c = 1
     mov    cl, 4
-    pusha                    ; alloca(32)
+    pusha                     ; alloca(32)
     
     ; F(8)x[i]=((W*)s)[i]
     mov    esi, [esp+64+4]    ; esi = s
@@ -86,7 +89,7 @@ xor_key:
     xor    [esi], ebx        ; x[i]^=t
     movsd                    ; s[i]=x[i]
     ; w=(w&-256)|S(w)
-    call   S          ; al=S(al)
+    call   S                 ; al=S(al)
     ror    eax, 8            ; w=R(w,8)
     loop   xor_key
     ; w=R(w,8)^c
@@ -111,23 +114,15 @@ upd_con:
     ; ***************************
     ; ShiftRows and SubBytes
     ; ***************************
-    ; F(16)((B*)x)[(i%4)+(((i/4)-(i%4))%4)*4]=S(((B*)s)[i]);
+    ; F(16)((u8*)x)[w]=S(((u8*)s)[i]), w=(w-3)&15;
     pusha
-    mov    cl, 16
 shift_rows:
     lodsb                    ; al = S(s[i])
     call   S
-    push   edx
-    mov    ebx, edx          ; ebx = i%4
-    and    ebx, 3            ;
-    shr    edx, 2            ; (i/4 - ebx) % 4
-    sub    edx, ebx          ; 
-    and    edx, 3            ; 
-    lea    ebx, [ebx+edx*4]  ; ebx = (ebx+edx*4)
-    mov    [edi+ebx], al     ; x[ebx] = al
-    pop    edx
-    inc    edx
-    loop   shift_rows
+    mov    [edi+edx], al
+    sub    edx, 3
+    and    edx, 15
+    jnz    shift_rows
     popa
     ; *****************************
     ; if(c!=108){
@@ -136,21 +131,20 @@ shift_rows:
     ; *****************************
     ; MixColumns
     ; *****************************
-    ; F(4)w=x[i],x[i]=R(w,8)^R(w,16)^R(w,24)^M(R(w,8)^w);
+    ; F(4)w=x[i],x[i]=R(w,8)^R(w,16)^R(w,24)^M(R(w, 8)^w);
     pusha
 mix_cols:
-    mov    eax, [edi]        ; w0 = x[i]
-    mov    ebx, eax          ; w1 = w0
-    ror    eax, 8            ; w0 = R(w0,8)
-    mov    edx, eax          ; w2 = w0
-    xor    eax, ebx          ; w0^= w1
-    call   ebp               ; w0 = M(w0)
-    xor    eax, edx          ; w0^= w2
-    ror    ebx, 16           ; w1 = R(w1,16)
-    xor    eax, ebx          ; w0^= w1
-    ror    ebx, 8            ; w1 = R(w1,8)
-    xor    eax, ebx          ; w0^= w1
-    stosd                    ; x[i] = w0
+    mov    eax, [edi]       ; w = x[i]
+    mov    edx, eax         ; t = R(w, 8)
+    ror    edx, 8           ; 
+    xor    eax, edx         ; w ^= t
+    call   ebp              ; 
+    xor    eax, edx
+    ror    edx, 8
+    xor    eax, edx
+    ror    edx, 8
+    xor    eax, edx
+    stosd
     loop   mix_cols
     popa
     jmp    enc_main

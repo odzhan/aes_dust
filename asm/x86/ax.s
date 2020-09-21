@@ -111,24 +111,15 @@ upd_con:
     // ***************************
     // ShiftRows and SubBytes
     // ***************************
-    // F(16)((B*)x)[(i%4)+(((i/4)-(i%4))%4)*4]=S(((B*)s)[i]);
+    // F(16)((u8*)x)[w]=S(((u8*)s)[i]), w=(w-3)&15;
     pusha
-    mov    cl, 16
 shift_rows:
     lodsb                    # al = S(s[i])
     call   S
-    push   edx
-    mov    ebx, edx          # ebx = i%4
-    and    ebx, 3            #
-    shr    edx, 2            # (i/4 - ebx) % 4
-    sub    edx, ebx          # 
-    and    edx, 3            # 
-    lea    ebx, [ebx+edx*4]  # ebx = (ebx+edx*4)
-    mov    [edi+ebx], al     # x[ebx] = al
-    pop    edx
-    inc    edx
-    loop   shift_rows
-    popa
+    mov    [edi+edx], al
+    sub    edx, 3
+    and    edx, 15
+    jnz    shift_rows
     // *****************************
     // if(c!=108){
     cmp    al, 108
@@ -139,19 +130,18 @@ shift_rows:
     // F(4)w=x[i],x[i]=R(w,8)^R(w,16)^R(w,24)^M(R(w,8)^w);
     pusha
 mix_cols:
-    mov    eax, [edi]        # w0 = x[i]
-    mov    ebx, eax          # w1 = w0
-    ror    eax, 8            # w0 = R(w0,8)
-    mov    edx, eax          # w2 = w0
-    xor    eax, ebx          # w0^= w1
-    call   ebp               # w0 = M(w0)
-    xor    eax, edx          # w0^= w2
-    ror    ebx, 16           # w1 = R(w1,16)
-    xor    eax, ebx          # w0^= w1
-    ror    ebx, 8            # w1 = R(w1,8)
-    xor    eax, ebx          # w0^= w1
-    stosd                    # x[i] = w0
-    loop   mix_cols
+    mov    eax, [edi]
+    mov    edx, eax
+    ror    edx, 8
+    xor    eax, edx
+    call   ebp
+    xor    eax, edx
+    ror    edx, 8
+    xor    eax, edx
+    ror    edx, 8
+    xor    eax, edx
+    stosd
+    loop mix_cols
     popa
     jmp    enc_main
     // *****************************

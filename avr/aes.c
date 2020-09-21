@@ -90,7 +90,7 @@
   // 128-bit version for 8-bit architectures
 
   void aes_ecb(void *mk, void *data) {
-      u8 a,b,c,d,i,j,t,x[AES_BLK_LEN],k[AES_KEY_LEN],rc=1,*s=(u8*)data;
+      u8 a,b,c,d,i,j,t,w,x[AES_BLK_LEN],k[AES_KEY_LEN],rc=1,*s=(u8*)data;
       
       // copy 128-bit plain text + 128-bit master key to x
       for(i=0;i<AES_BLK_LEN;i++) {
@@ -114,8 +114,8 @@
           k[i+4]^=k[i];
         }
         // SubBytes and ShiftRows
-        for(i=0;i<AES_BLK_LEN;i++) {
-          x[(i&3)+((((u32)(i>>2)-(i&3))&3)<<2)]=S(s[i]);
+        for(w=i=0;i<AES_BLK_LEN;i++) {
+          ((u8*)x)[w] = S(((u8*)s)[i]), w=(w-3)&15;
         }
         // if not round 11
         if(rc!=108) {
@@ -163,8 +163,8 @@
           if(c==27) break;
           r=(r+1)&1;
           // SubBytes and ShiftRows
-          for(i=0;i<AES_BLK_LEN;i++) {
-            ((u8*)x)[(i%4)+(((i/4)-(i%4))%4)*4] = S(((u8*)s)[i]);
+          for(w=i=0;i<AES_BLK_LEN;i++) {
+            ((u8*)x)[w] = S(((u8*)s)[i]), w = (w-3)&15;
           }
           // if not round 15, MixColumns    
           if((c!=128) | r) {
@@ -198,8 +198,8 @@
           // update constant
           c=M(c);
           // SubBytes and ShiftRows
-          for(i=0;i<AES_BLK_LEN;i++) {
-            ((u8*)x)[(i%4)+(((i/4)-(i%4))%4)*4]=S(((u8*)s)[i]);
+          for(w=i=0;i<AES_BLK_LEN;i++) {
+            ((u8*)x)[w] = S(((u8*)s)[i]), w = (w-3)&15;
           }
           // if not round 11, MixColumns
           if(c!=108) {

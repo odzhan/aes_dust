@@ -137,7 +137,7 @@ L2:
     mov     r4, r7
     
     // SubBytes and ShiftRows
-    // F(16)((B*)x)[(i%4)+(((i/4)-(i%4))%4)*4]=S(s[i]);
+    // F(16)((u8*)x)[w]=S(((u8*)s)[i]), w=(w-3)&15;
 L3:
     ldrb    r10, [r0, r2]
     bl      S

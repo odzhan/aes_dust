@@ -55,12 +55,12 @@
   </tr>
   <tr>
     <td>x86</td>
-    <td>205</td>
-    <td>272</td>
+    <td>188</td>
+    <td>255</td>
   </tr>
   <tr>
     <td>AMD64</td>
-    <td>253</td>
+    <td>315</td>
     <td>339</td>
   </tr>
   <tr>
@@ -117,13 +117,13 @@
   </tr>
   <tr>
     <td>x86</td>
-    <td>321</td>
-    <td>477</td>
+    <td>358</td>
+    <td>493</td>
   </tr>
   <tr>
     <td>AMD64</td>
-    <td>486</td>
-    <td>673</td>
+    <td>481</td>
+    <td>693</td>
   </tr>
   <tr>
     <td>ARM32</td>
@@ -140,6 +140,10 @@
 <h4>Side channel attacks</h4>
 
 <p>AES was never intended to be resistant against side channel attacks. However, if you decide to use this code for an embedded project that requires a high level of security, first evaluate whether the code is sufficient against such attacks before including in your project.</p>
+
+<h4>Acknowledgements</h4>
+
+<p>MarkC for optimizations.</p>
 
 <h4>Licensing information</h4>
 

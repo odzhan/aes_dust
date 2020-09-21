@@ -155,29 +155,16 @@ upd_con:
 ; F(16)((B*)x)[(i%4)+(((i/4)-(i%4))%4)*4]=S(((B*)s)[i])
 
     push   rax
-    push   rcx
     push   rsi
-    push   rdi
-    
-    mov    cl, 16
 shift_rows:
     lodsb                    ; al = S(s[i])
     call   S
-    push   rdx
-    mov    ebx, edx          ; ebx = i%4
-    and    ebx, 3            ;
-    shr    edx, 2            ; (i/4 - ebx) % 4
-    sub    edx, ebx          ; 
-    and    edx, 3            ; 
-    lea    ebx, [ebx+edx*4]  ; ebx = (ebx+edx*4)
-    mov    [rdi+rbx], al     ; x[ebx] = al
-    pop    rdx
-    add    dl, 1
-    loop   shift_rows
+    mov    [rdi+rdx], al
+    sub    edx, 3
+    and    edx, 15
+    jnz    shift_rows
     
-    pop    rdi
     pop    rsi
-    pop    rcx
     pop    rax
 ; *****************************
     ; if(c!=108){

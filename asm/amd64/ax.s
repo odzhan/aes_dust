@@ -110,6 +110,8 @@ enc_main:
     xchg   rsi, rdi
     mov    eax, [rsi+16+12]  # w=R(k[3],8)
     ror    eax, 8
+    push   4
+    pop    rcx
 xor_key:
     mov    ebx, [rsi+16]     # t=k[i]
     xor    [rsi], ebx        # x[i]^=t
@@ -152,32 +154,19 @@ upd_con:
 // ***************************
 // ShiftRows and SubBytes
 // ***************************
-// F(16)((B*)x)[(i%4)+(((i/4)-(i%4))%4)*4]=S(((B*)s)[i])
+// F(16)((u8*)x)[w]=S(((u8*)s)[i]), w=(w-3)&15;
 
     push   rax
-    push   rcx
     push   rsi
-    push   rdi
-    
-    mov    cl, 16
 shift_rows:
     lodsb                    # al = S(s[i])
     call   S
-    push   rdx
-    mov    ebx, edx          # ebx = i%4
-    and    ebx, 3            #
-    shr    edx, 2            # (i/4 - ebx) % 4
-    sub    edx, ebx          # 
-    and    edx, 3            # 
-    lea    ebx, [ebx+edx*4]  # ebx = (ebx+edx*4)
-    mov    [rdi+rbx], al     # x[ebx] = al
-    pop    rdx
-    add    dl, 1
-    loop   shift_rows
+    mov    [rdi+rdx], al
+    sub    edx, 3
+    and    edx, 15
+    jnz    shift_rows
     
-    pop    rdi
     pop    rsi
-    pop    rcx
     pop    rax
 // *****************************
     // if(c!=108){
@@ -188,26 +177,25 @@ shift_rows:
 // *****************************
 // F(4)w=x[i],x[i]=R(w,8)^R(w,16)^R(w,24)^M(R(w,8)^w)
     push   rax
-    push   rcx
     push   rdx
     push   rdi
+    mov    cl, 4
 mix_cols:
-    mov    eax, [rdi]        # w0 = x[i]
-    mov    ebx, eax          # w1 = w0
-    ror    eax, 8            # w0 = R(w0,8)
-    mov    edx, eax          # w2 = w0
-    xor    eax, ebx          # w0^= w1
-    call   rbp               # w0 = M(w0)
-    xor    eax, edx          # w0^= w2
-    ror    ebx, 16           # w1 = R(w1,16)
-    xor    eax, ebx          # w0^= w1
-    ror    ebx, 8            # w1 = R(w1,8)
-    xor    eax, ebx          # w0^= w1
-    stosd                    # x[i] = w0
+    mov    eax, [rdi]
+    mov    edx, eax
+    ror    edx, 8
+    xor    eax, edx
+    call   rbp
+    xor    eax, edx
+    ror    edx, 8
+    xor    eax, edx
+    ror    edx, 8
+    xor    eax, edx
+    stosd
     loop   mix_cols
+    
     pop    rdi
     pop    rdx
-    pop    rcx
     pop    rax
     jmp    enc_main
 // *****************************
