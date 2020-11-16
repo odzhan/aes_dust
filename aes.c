@@ -154,7 +154,7 @@
             w=(w&-256) | S(w&255),w=R(w,8);
           } 
           // AddConstant, update constant
-          if(!r)w=R(w,8)^c,c=M(c);
+          if(!r)w=R(w,8)^(c<<SHF_C),c=M(c);
           // AddRoundKey, 2nd part of ExpandKey
           for(i=0;i<4;i++) {
             ((u32*)s)[i]=x[i]^k[r*4+i], w=k[r*4+i]^=w;
@@ -189,7 +189,7 @@
             w=(w&-256)|S(w&255), w=R(w,8);
           }
           // AddConstant, AddRoundKey, 2nd part of ExpandKey
-          w=R(w, 8)^c;
+          w=R(w, 8)^(c<<SHF_C);
           for(i=0;i<4;i++) {
             ((u32*)s)[i]=x[i]^k[i], w=k[i]^=w;
           }

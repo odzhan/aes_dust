@@ -39,13 +39,27 @@
 #error "AES-256 is not supported by the assembly code."
 #endif
 
+#ifndef AES_BIG_ENDIAN
+  #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    #define AES_BIG_ENDIAN 1
+  #elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    #define AES_BIG_ENDIAN 0
+  #endif
+#endif
+
 typedef unsigned char u8;
 typedef char s8;
 
 #if AES_INT_LEN == 1
   typedef unsigned char u32;
 #else
-  #define R(v,n)(((v)>>(n))|((v)<<(32-(n))))
+  #if AES_BIG_ENDIAN
+    #define R(v,n)(((v)<<(n))|((v)>>(32-(n))))
+    #define SHF_C 24
+  #else
+    #define R(v,n)(((v)>>(n))|((v)<<(32-(n))))
+    #define SHF_C 0
+  #endif
   typedef unsigned int u32;
 #endif
 
