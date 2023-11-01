@@ -31,8 +31,8 @@
 #define M(x)(((x)<<1)^((-((x)>>7))&0x1b))
 #else
 u32 M(u32 x) {
-	u32 t = x & 0x80808080;
-	return((x ^ t) << 1) ^ ((t >> 7) * 0x1b);
+    u32 t = x & 0x80808080;
+    return((x ^ t) << 1) ^ ((t >> 7) * 0x1b);
 }
 #endif
 
@@ -48,29 +48,29 @@ static u8 sbox[256] = { 0 };
 static
 u8 
 S(u8 byte) {
-	// already initialised? return byte
-	if (sbox[0] != 0) return sbox[byte];
+    // already initialised? return byte
+    if (sbox[0] != 0) return sbox[byte];
 
-	u32 x, i;
-	u8 gf_exp[256];
+    u32 x, i;
+    u8 gf_exp[256];
 
-	x = 1;
+    x = 1;
     
-	for (i = 0; i < 256; i++) {
-		gf_exp[i] = x;
-		x ^= M(x);
-	}
+    for (i = 0; i < 256; i++) {
+        gf_exp[i] = x;
+        x ^= M(x);
+    }
 
-	sbox[0] = 0x63;
+    sbox[0] = 0x63;
 
-	for (i = 0; i < 255; i++) {
-		x = gf_exp[255 - i];
-		x |= x << 8;
-		x ^= (x >> 4) ^ (x >> 5) ^ (x >> 6) ^ (x >> 7);
-		sbox[gf_exp[i]] = (x ^ 0x63) & 0xFF;
-	}
+    for (i = 0; i < 255; i++) {
+        x = gf_exp[255 - i];
+        x |= x << 8;
+        x ^= (x >> 4) ^ (x >> 5) ^ (x >> 6) ^ (x >> 7);
+        sbox[gf_exp[i]] = (x ^ 0x63) & 0xFF;
+    }
 
-	return sbox[byte];
+    return sbox[byte];
 }
 #else
 u8 sbox[256] =
@@ -115,15 +115,15 @@ u8 sbox[256] =
 static
 u8 
 S(u8 x) {
-	u8 i, y, c;
-	if (x) {
-		for (c = i = 0, y = 1; --i; y = (!c && y == x) ? c = 1 : y, y ^= M(y));
-		x = y;
-		for (i = 0; i < 4; i++) {
-			x ^= y = (y << 1) | (y >> 7);
-		}
-	}
-	return x ^ 99;
+    u8 i, y, c;
+    if (x) {
+        for (c = i = 0, y = 1; --i; y = (!c && y == x) ? c = 1 : y, y ^= M(y));
+        x = y;
+        for (i = 0; i < 4; i++) {
+            x ^= y = (y << 1) | (y >> 7);
+        }
+    }
+    return x ^ 99;
 }
 #endif
 
@@ -132,45 +132,45 @@ S(u8 x) {
 
 void 
 aes_ecb_encrypt(void* mk, void* data) {
-	u8 a, b, c, d, i, j, t, w, x[AES_BLK_LEN], k[AES_KEY_LEN], rc = 1, * s = (u8*)data;
+    u8 a, b, c, d, i, j, t, w, x[AES_BLK_LEN], k[AES_KEY_LEN], rc = 1, * s = (u8*)data;
 
-	// copy 128-bit plain text + 128-bit master key to x
-	for (i = 0; i < AES_BLK_LEN; i++) {
-		x[i] = s[i], k[i] = ((u8*)mk)[i];
-	}
+    // copy 128-bit plain text + 128-bit master key to x
+    for (i = 0; i < AES_BLK_LEN; i++) {
+        x[i] = s[i], k[i] = ((u8*)mk)[i];
+    }
 
-	for (;;) {
-		// AddRoundKey
-		for (i = 0; i < AES_BLK_LEN; i++) {
-			s[i] = x[i] ^ k[i];
-		}
-		// if round 11, stop
-		if (rc == 108)break;
-		// AddConstant
-		k[0] ^= rc; rc = M(rc);
-		// ExpandKey
-		for (i = 0; i < 4; i++) {
-			k[i] ^= S(k[12 + ((i - 3) & 3)]);
-		}
-		for (i = 0; i < 12; i++) {
-			k[i + 4] ^= k[i];
-		}
-		// SubBytes and ShiftRows
-		for (w = i = 0; i < AES_BLK_LEN; i++) {
-			((u8*)x)[w] = S(((u8*)s)[i]), w = (w - 3) & 15;
-		}
-		// if not round 11
-		if (rc != 108) {
-			// MixColumns
-			for (i = 0; i < AES_BLK_LEN; i += 4) {
-				a = x[i], b = x[i + 1], c = x[i + 2], d = x[i + 3];
-				for (j = 0; j < 4; j++) {
-					x[i + j] ^= a ^ b ^ c ^ d ^ M(a ^ b);
-					t = a, a = b, b = c, c = d, d = t;
-				}
-			}
-		}
-	}
+    for (;;) {
+        // AddRoundKey
+        for (i = 0; i < AES_BLK_LEN; i++) {
+            s[i] = x[i] ^ k[i];
+        }
+        // if round 11, stop
+        if (rc == 108)break;
+        // AddConstant
+        k[0] ^= rc; rc = M(rc);
+        // ExpandKey
+        for (i = 0; i < 4; i++) {
+            k[i] ^= S(k[12 + ((i - 3) & 3)]);
+        }
+        for (i = 0; i < 12; i++) {
+            k[i + 4] ^= k[i];
+        }
+        // SubBytes and ShiftRows
+        for (w = i = 0; i < AES_BLK_LEN; i++) {
+            ((u8*)x)[w] = S(((u8*)s)[i]), w = (w - 3) & 15;
+        }
+        // if not round 11
+        if (rc != 108) {
+            // MixColumns
+            for (i = 0; i < AES_BLK_LEN; i += 4) {
+                a = x[i], b = x[i + 1], c = x[i + 2], d = x[i + 3];
+                for (j = 0; j < 4; j++) {
+                    x[i + j] ^= a ^ b ^ c ^ d ^ M(a ^ b);
+                    t = a, a = b, b = c, c = d, d = t;
+                }
+            }
+        }
+    }
 }
 #else
 // 32-bit or 64-bit versions
@@ -179,79 +179,79 @@ aes_ecb_encrypt(void* mk, void* data) {
 
 void 
 aes_ecb_encrypt(void* mk, void* data) {
-	u32 c = 1, i, r = 0, w, x[4], k[8], * s = (u32*)data;
+    u32 c = 1, i, r = 0, w, x[4], k[8], * s = (u32*)data;
 
-	// copy 128-bit plain text
-	for (i = 0; i < 4; i++) {
-		x[i] = s[i];
-	}
-	// copy 256-bit master key
-	for (i = 0; i < 8; i++) {
-		k[i] = ((u32*)mk)[i];
-	}
+    // copy 128-bit plain text
+    for (i = 0; i < 4; i++) {
+        x[i] = s[i];
+    }
+    // copy 256-bit master key
+    for (i = 0; i < 8; i++) {
+        k[i] = ((u32*)mk)[i];
+    }
 
-	for (;;) {
-		// 1st part of ExpandKey
-		w = k[r ? 3 : 7];
-		for (i = 0; i < 4; i++) {
-			w = (w & -256) | S(w & 255), w = R(w, 8);
-		}
-		// AddConstant, update constant
-		if (!r)w = R(w, 8) ^ (c << SHF_C), c = M(c);
-		// AddRoundKey, 2nd part of ExpandKey
-		for (i = 0; i < 4; i++) {
-			((u32*)s)[i] = x[i] ^ k[r * 4 + i], w = k[r * 4 + i] ^= w;
-		}
-		// if round 15, stop
-		if (c == 27) break;
-		r = (r + 1) & 1;
-		// SubBytes and ShiftRows
-		for (w = i = 0; i < AES_BLK_LEN; i++) {
-			((u8*)x)[w] = S(((u8*)s)[i]), w = (w - 3) & 15;
-		}
-		// if not round 15, MixColumns    
-		if ((c != 128) | r) {
-			for (i = 0; i < 4; i++) {
-				w = x[i], x[i] = R(w, 8) ^ R(w, 16) ^ R(w, 24) ^ M(R(w, 8) ^ w);
-			}
-		}
-	}
+    for (;;) {
+        // 1st part of ExpandKey
+        w = k[r ? 3 : 7];
+        for (i = 0; i < 4; i++) {
+            w = (w & -256) | S(w & 255), w = R(w, 8);
+        }
+        // AddConstant, update constant
+        if (!r)w = R(w, 8) ^ (c << SHF_C), c = M(c);
+        // AddRoundKey, 2nd part of ExpandKey
+        for (i = 0; i < 4; i++) {
+            ((u32*)s)[i] = x[i] ^ k[r * 4 + i], w = k[r * 4 + i] ^= w;
+        }
+        // if round 15, stop
+        if (c == 27) break;
+        r = (r + 1) & 1;
+        // SubBytes and ShiftRows
+        for (w = i = 0; i < AES_BLK_LEN; i++) {
+            ((u8*)x)[w] = S(((u8*)s)[i]), w = (w - 3) & 15;
+        }
+        // if not round 15, MixColumns    
+        if ((c != 128) | r) {
+            for (i = 0; i < 4; i++) {
+                w = x[i], x[i] = R(w, 8) ^ R(w, 16) ^ R(w, 24) ^ M(R(w, 8) ^ w);
+            }
+        }
+    }
 }
 #else
 void 
 aes_ecb_encrypt(void* mk, void* data) {
-	u32 c = 1, i, w, x[4], k[4], * s = (u32*)data;
+    u32 c = 1, i, w, x[4], k[4], * s = (u32*)data;
 
-	// copy 128-bit plain text + 128-bit master key to x
-	for (i = 0; i < 4; i++) {
-		x[i] = s[i], k[i] = ((u32*)mk)[i];
-	}
-	for (;;) {
-		// 1st part of ExpandKey
-		w = k[3];
-		for (i = 0; i < 4; i++) {
-			w = (w & -256) | S(w & 255), w = R(w, 8);
-		}
-		// AddConstant, AddRoundKey, 2nd part of ExpandKey
-		w = R(w, 8) ^ (c << SHF_C);
-		for (i = 0; i < 4; i++) {
-			s[i] = x[i] ^ k[i], w = k[i] ^= w;
-		}
-		// if round 11, stop
-		if (c == 108) break;
-		// update constant
-		c = M(c);
-		// SubBytes and ShiftRows
-		for (w = i = 0; i < AES_BLK_LEN; i++) {
-			((u8*)x)[w] = S(((u8*)s)[i]), w = (w - 3) & 15;
-		}
-		// if not round 11, MixColumns
-		if (c != 108) {
-			for (i = 0; i < 4; i++) {
-				w = x[i], x[i] = R(w, 8) ^ R(w, 16) ^ R(w, 24) ^ M(R(w, 8) ^ w);
-			}
-		}
-	}
+    // copy 128-bit plain text + 128-bit master key to x
+    for (i = 0; i < 4; i++) {
+        x[i] = s[i], k[i] = ((u32*)mk)[i];
+    }
+    for (;;) {
+        // 1st part of ExpandKey
+        w = k[3];
+        for (i = 0; i < 4; i++) {
+            w = (w & -256) | S(w & 255), w = R(w, 8);
+        }
+        // AddConstant, AddRoundKey, 2nd part of ExpandKey
+        w = R(w, 8) ^ (c << SHF_C);
+        for (i = 0; i < 4; i++) {
+            s[i] = x[i] ^ k[i], w = k[i] ^= w;
+        }
+        // if round 11, stop
+        if (c == 108) break;
+        // update constant
+        c = M(c);
+        // SubBytes and ShiftRows
+        for (w = i = 0; i < AES_BLK_LEN; i++) {
+            ((u8*)x)[w] = S(((u8*)s)[i]), w = (w - 3) & 15;
+        }
+        // if not round 11, MixColumns
+        if (c != 108) {
+            for (i = 0; i < 4; i++) {
+                w = x[i], x[i] = R(w, 8) ^ R(w, 16) ^ R(w, 24) ^ M(R(w, 8) ^ w);
+            }
+        }
+    }
 }
 
 #endif
@@ -261,22 +261,22 @@ aes_ecb_encrypt(void* mk, void* data) {
 // Encrypt using Counter (CTR) mode
 void 
 aes_ctr_encrypt(u32 len, void* ctr, void* data, void* mk) {
-	u8 i, r, t[AES_BLK_LEN], * p = data, * c = ctr;
+    u8 i, r, t[AES_BLK_LEN], * p = data, * c = ctr;
 
-	while (len) {
-		// copy counter+nonce to local buffer
-		for (i = 0; i < AES_BLK_LEN; i++)t[i] = c[i];
-		// encrypt t
-		aes_ecb_encrypt(mk, t);
-		// XOR plaintext with ciphertext
-		r = len > AES_BLK_LEN ? AES_BLK_LEN : len;
-		for (i = 0; i < r; i++) p[i] ^= t[i];
-		// update length + position
-		len -= r; p += r;
-		// update counter.
-		for (i = AES_BLK_LEN; i != 0; i--)
-			if (++c[i - 1]) break;
-	}
+    while (len) {
+        // copy counter+nonce to local buffer
+        for (i = 0; i < AES_BLK_LEN; i++)t[i] = c[i];
+        // encrypt t
+        aes_ecb_encrypt(mk, t);
+        // XOR plaintext with ciphertext
+        r = len > AES_BLK_LEN ? AES_BLK_LEN : len;
+        for (i = 0; i < r; i++) p[i] ^= t[i];
+        // update length + position
+        len -= r; p += r;
+        // update counter.
+        for (i = AES_BLK_LEN; i != 0; i--)
+            if (++c[i - 1]) break;
+    }
 }
 #endif
 
@@ -284,20 +284,20 @@ aes_ctr_encrypt(u32 len, void* ctr, void* data, void* mk) {
 // Encrypt using Output feedback (OFB) mode.
 void 
 aes_ofb_encrypt(u32 len, void* iv, void* data, void* mk) {
-	u8 i, r, t[AES_BLK_LEN], * p = data, * c = iv;
+    u8 i, r, t[AES_BLK_LEN], * p = data, * c = iv;
 
-	// copy IV to local buffer
-	for (i = 0; i < AES_BLK_LEN; i++)t[i] = c[i];
+    // copy IV to local buffer
+    for (i = 0; i < AES_BLK_LEN; i++)t[i] = c[i];
 
-	while (len) {
-		// encrypt t
-		aes_ecb_encrypt(mk, t);
-		// XOR plaintext with ciphertext
-		r = len > AES_BLK_LEN ? AES_BLK_LEN : len;
-		for (i = 0; i < r; i++) p[i] ^= t[i];
-		// update length + position
-		len -= r; p += r;
-	}
+    while (len) {
+        // encrypt t
+        aes_ecb_encrypt(mk, t);
+        // XOR plaintext with ciphertext
+        r = len > AES_BLK_LEN ? AES_BLK_LEN : len;
+        for (i = 0; i < r; i++) p[i] ^= t[i];
+        // update length + position
+        len -= r; p += r;
+    }
 }
 #endif
 
@@ -308,36 +308,36 @@ aes_ofb_encrypt(u32 len, void* iv, void* data, void* mk) {
 // len should also be a multiple of 16
 void 
 aes_cbc_encrypt(u32 len, void* iv, void* data, void* mk) {
-	u8 i, *p = data, *c = iv;
+    u8 i, *p = data, *c = iv;
     
-	while (len) {
+    while (len) {
         // XOR the plaintext with IV or last ciphertext
-		for (i = 0; i < AES_BLK_LEN; i++) p[i] ^= c[i];
+        for (i = 0; i < AES_BLK_LEN; i++) p[i] ^= c[i];
         // Encrypt the plaintext
-		aes_ecb_encrypt(mk, p);
-		// update length + position
-		len -= AES_BLK_LEN; 
+        aes_ecb_encrypt(mk, p);
+        // update length + position
+        len -= AES_BLK_LEN; 
         c = p; 
         p += AES_BLK_LEN;
-	}
+    }
 }
 
 // Decrypt using Output feedback (CBC) mode.
 void 
 aes_cbc_decrypt(u32 len, void* iv, void* data, void* mk) {
-	u8 i, r, t[AES_BLK_LEN], *p = data, *c = iv;
+    u8 i, r, t[AES_BLK_LEN], *p = data, *c = iv;
 
-	while (len) {
+    while (len) {
         // copy ciphertext to local buffer
         for (i = 0; i< AES_BLK_LEN; i++) t[i] = p[i];
-		// decrypt ciphertext
-		//aes_ecb_decrypt(mk, p);
+        // decrypt ciphertext
+        //aes_ecb_decrypt(mk, p);
         // XOR the plaintext with IV or last ciphertext
-		for (i = 0; i < AES_BLK_LEN; i++) p[i] ^= c[i];
-		// update length + position
-		len -= AES_BLK_LEN;
+        for (i = 0; i < AES_BLK_LEN; i++) p[i] ^= c[i];
+        // update length + position
+        len -= AES_BLK_LEN;
         c = t;
         p += AES_BLK_LEN;
-	}
+    }
 }
 #endif

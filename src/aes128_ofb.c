@@ -31,22 +31,22 @@
 */
 void 
 aes128_ofb_encrypt(aes128_ctx* c, void* data,  u32 len) {
-	u8 i, r, t[AES_BLK_LEN], * p = data, *iv = c->iv;
+    u8 i, r, t[AES_BLK_LEN], * p = data, *iv = c->iv;
 
-	// copy IV to local buffer
-	for (i = 0; i < AES_BLK_LEN; i++)t[i] = iv[i];
+    // copy IV to local buffer
+    for (i = 0; i < AES_BLK_LEN; i++)t[i] = iv[i];
 
-	while (len) {
-		// encrypt t
-		aes128_ecb_encrypt(c, t);
-		// XOR plaintext with ciphertext
-		r = len > AES_BLK_LEN ? AES_BLK_LEN : len;
-		for (i = 0; i < r; i++) p[i] ^= t[i];
-		// update length + position
-		len -= r;
+    while (len) {
+        // encrypt t
+        aes128_ecb_encrypt(c, t);
+        // XOR plaintext with ciphertext
+        r = len > AES_BLK_LEN ? AES_BLK_LEN : len;
+        for (i = 0; i < r; i++) p[i] ^= t[i];
+        // update length + position
+        len -= r;
         iv = t;        
         p += r;
-	}
+    }
 }
 
 /**
