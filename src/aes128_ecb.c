@@ -116,8 +116,7 @@ aes128_ecb_encrypt(aes128_ctx* c, void* data) {
         // Advance to next round key.
         rk += 4;
         // Last round? Stop
-        if (nr == 10) break;
-        nr++;
+        if (nr++ == 10) break;
         // SubBytes and ShiftRows
         for (w = i = 0; i < 16; i++) {
             ((u8*)x)[w] = c->sbox[((u8*)s)[i]], w = (w - 3) & 15;
@@ -147,17 +146,13 @@ aes128_ecb_decrypt(aes128_ctx* c, void* data) {
     for (;;) {
         // Subtract 16-bytes from round keys buffer.
         rk -= 4;
-        // InvShiftRows
+        // InvShiftRows and InvSubBytes
         for (w = 0, i = 15; (int)i>=0; i--) {
-            w = (w + 3) & 15, ((u8*)x)[i] = ((u8*)s)[w];
-        }
-        // InvSubBytes
-        for (w = i = 0; i < 16; i++) {
-            ((u8*)s)[i] = c->sbox_inv[((u8*)x)[i]];
+            w = (w + 3) & 15, ((u8*)x)[i] = c->sbox_inv[((u8*)s)[w]];
         }
         // AddRoundKey
         for (i = 0; i < 4; i++) {
-            s[i] ^= rk[i];
+            s[i] = x[i] ^ rk[i];
         }
         if (--nr == 0) break;
         // InvMixColumns

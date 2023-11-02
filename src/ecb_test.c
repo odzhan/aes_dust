@@ -63,6 +63,9 @@ main(void) {
         
         printf("\n Encrypted  : ");
         for (int i=0; i<16; i++) printf(" %02x", buf[i]);
+
+        equ = (memcmp(buf, ecb_cipher[i], AES_BLK_LEN)==0);
+        printf("\n Encryption #%d : %s\n", (i+1), equ ? "OK" : "FAILED");
         
         aes128_ecb_decrypt(&c, buf);
         
@@ -70,7 +73,7 @@ main(void) {
         for (int i=0; i<16; i++) printf(" %02x", buf[i]);
         
         equ = (memcmp(buf, ecb_plain[i], AES_BLK_LEN)==0);
-        printf("\n Test #%d : %s\n", (i+1), equ ? "OK" : "FAILED");
+        printf("\n Decryption #%d : %s\n", (i+1), equ ? "OK" : "FAILED");
     }
     return 0;
 }
