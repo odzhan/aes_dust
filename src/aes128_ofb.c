@@ -50,7 +50,7 @@ aes128_ofb_encrypt(aes128_ctx* c, void* data,  u32 len) {
 }
 
 /**
-    Decrypt data inplace using AES-128 in CBC mode.
+    Decrypt data inplace using AES-128 in Output feedback (OFB) mode.
 */
 void 
 aes128_ofb_decrypt(aes128_ctx* c, void* data,  u32 len) {

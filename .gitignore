@@ -1,5 +1,6 @@
 # Ignore compiled files
 *.obj
+*.o
 *.exe
 *.dll
 *.pdb
@@ -12,6 +13,7 @@
 *.suo
 *.sdf
 *.opensdf
+*.log
 
 # Ignore user-specific files
 *.user

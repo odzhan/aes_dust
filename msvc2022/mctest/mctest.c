@@ -51,7 +51,7 @@ int main(void) {
 			aes_ecb(s);
 			memcpy(data, s, 16);
 #else
-			aes_ecb_encrypt(key, data);
+			aes_ecb(key, data);
 #endif
 		}
 #if AES_KEY_LEN == 32

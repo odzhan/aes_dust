@@ -166,10 +166,10 @@ main (void) {
         memcpy(s, data, 16);
         memcpy(&s[16], key, 16);
         
-        aes_ecb_encrypt(s);
+        aes_ecb(s);
         memcpy(data, s, 16);
       #else
-        aes_ecb_encrypt(key, data);
+        aes_ecb(key, data);
       #endif
       equ = (memcmp(data, ecb_cipher[i], 16) == 0);
       
@@ -222,28 +222,5 @@ main (void) {
           );
       }   
     #endif
-
-    #ifdef CBC
-      puts ("\n**** AES-128 CBC Test ****\n");
-  
-      for(i=0; i<2; i++) {
-        bin2hex("key",    cbc_key[i],    16);
-        bin2hex("iv",     cbc_iv[i],     16);
-        bin2hex("plain",  cbc_plain[i],  16);
-        bin2hex("cipher", cbc_cipher[i], 16);
-        
-        memcpy(data, cbc_plain[i], 16);
-        
-        aes_cbc_encrypt(16, cbc_iv[i], data, cbc_key[i]);
-        equ = (memcmp(data, cbc_cipher[i], 16) == 0);
-        
-        bin2hex("result", data, 16);
-        
-        printf("AES-128 CBC Encryption Test #%i : %s\n\n", 
-          (i+1), equ ? "OK" : "FAILED"
-          );
-      }   
-    #endif
-    
     return 0;
 }

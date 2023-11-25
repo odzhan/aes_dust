@@ -143,10 +143,10 @@ main (void) {
         memcpy(s, data, 16);
         memcpy(&s[16], key, 16);
         
-        aes_ecb_encrypt(s);
+        aes_ecb(s);
         memcpy(data, s, 16);
       #else
-        aes_ecb_encrypt(key, data);
+        aes_ecb(key, data);
       #endif
       equ = (memcmp(data, ecb_cipher[i], 16) == 0);
       

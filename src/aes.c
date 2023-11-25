@@ -131,7 +131,7 @@ S(u8 x) {
 // 128-bit version for 8-bit architectures
 
 void 
-aes_ecb_encrypt(void* mk, void* data) {
+aes_ecb(void* mk, void* data) {
     u8 a, b, c, d, i, j, t, w, x[AES_BLK_LEN], k[AES_KEY_LEN], rc = 1, * s = (u8*)data;
 
     // copy 128-bit plain text + 128-bit master key to x
@@ -178,7 +178,7 @@ aes_ecb_encrypt(void* mk, void* data) {
 #if AES_KEY_LEN == 32
 
 void 
-aes_ecb_encrypt(void* mk, void* data) {
+aes_ecb(void* mk, void* data) {
     u32 c = 1, i, r = 0, w, x[4], k[8], * s = (u32*)data;
 
     // copy 128-bit plain text
@@ -219,7 +219,7 @@ aes_ecb_encrypt(void* mk, void* data) {
 }
 #else
 void 
-aes_ecb_encrypt(void* mk, void* data) {
+aes_ecb(void* mk, void* data) {
     u32 c = 1, i, w, x[4], k[4], * s = (u32*)data;
 
     // copy 128-bit plain text + 128-bit master key to x
@@ -267,7 +267,7 @@ aes_ctr_encrypt(u32 len, void* ctr, void* data, void* mk) {
         // copy counter+nonce to local buffer
         for (i = 0; i < AES_BLK_LEN; i++)t[i] = c[i];
         // encrypt t
-        aes_ecb_encrypt(mk, t);
+        aes_ecb(mk, t);
         // XOR plaintext with ciphertext
         r = len > AES_BLK_LEN ? AES_BLK_LEN : len;
         for (i = 0; i < r; i++) p[i] ^= t[i];
@@ -291,53 +291,12 @@ aes_ofb_encrypt(u32 len, void* iv, void* data, void* mk) {
 
     while (len) {
         // encrypt t
-        aes_ecb_encrypt(mk, t);
+        aes_ecb(mk, t);
         // XOR plaintext with ciphertext
         r = len > AES_BLK_LEN ? AES_BLK_LEN : len;
         for (i = 0; i < r; i++) p[i] ^= t[i];
         // update length + position
         len -= r; p += r;
-    }
-}
-#endif
-
-#ifdef CBC
-
-// Encrypt using Output feedback (CBC) mode.
-// data needs to be aligned by 16 bytes.
-// len should also be a multiple of 16
-void 
-aes_cbc_encrypt(u32 len, void* iv, void* data, void* mk) {
-    u8 i, *p = data, *c = iv;
-    
-    while (len) {
-        // XOR the plaintext with IV or last ciphertext
-        for (i = 0; i < AES_BLK_LEN; i++) p[i] ^= c[i];
-        // Encrypt the plaintext
-        aes_ecb_encrypt(mk, p);
-        // update length + position
-        len -= AES_BLK_LEN; 
-        c = p; 
-        p += AES_BLK_LEN;
-    }
-}
-
-// Decrypt using Output feedback (CBC) mode.
-void 
-aes_cbc_decrypt(u32 len, void* iv, void* data, void* mk) {
-    u8 i, r, t[AES_BLK_LEN], *p = data, *c = iv;
-
-    while (len) {
-        // copy ciphertext to local buffer
-        for (i = 0; i< AES_BLK_LEN; i++) t[i] = p[i];
-        // decrypt ciphertext
-        //aes_ecb_decrypt(mk, p);
-        // XOR the plaintext with IV or last ciphertext
-        for (i = 0; i < AES_BLK_LEN; i++) p[i] ^= c[i];
-        // update length + position
-        len -= AES_BLK_LEN;
-        c = t;
-        p += AES_BLK_LEN;
     }
 }
 #endif
