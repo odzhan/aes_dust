@@ -1,0 +1,6 @@
+test:
+    cl /DTEST /nologo test128.c aes.c
+mctest:
+    cl /DTEST /nologo mctest.c aes.c
+clean:
+    del mctest.exe test128.exe test128.obj mctest.obj aes.obj
