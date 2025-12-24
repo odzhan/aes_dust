@@ -1,3 +1,11 @@
+#![CI](https://github.com/odzhan/aes_dust/actions/workflows/ci.yml/badge.svg)
+![Issues](https://img.shields.io/github/issues/odzhan/aes_dust)
+![Stars](https://img.shields.io/github/stars/odzhan/aes_dust)
+![Forks](https://img.shields.io/github/forks/odzhan/aes_dust)
+![License](https://img.shields.io/github/license/odzhan/aes_dust)
+![Last Commit](https://img.shields.io/github/last-commit/odzhan/aes_dust)
+![Repo Size](https://img.shields.io/github/repo-size/odzhan/aes_dust)
+
 # AES-dust
 
 AES-dust is a compact, size-conscious AES-128 block cipher implementation written in portable C99. It targets resource-constrained environments while still providing modern build tooling and packaging.
