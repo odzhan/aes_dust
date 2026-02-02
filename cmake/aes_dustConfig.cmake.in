@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+
+# No external dependencies to find presently; hook here if needed
+
+include("${CMAKE_CURRENT_LIST_DIR}/aes_dustTargets.cmake")
+
+check_required_components(aes_dust)
+

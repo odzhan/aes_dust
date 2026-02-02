@@ -1,0 +1,55 @@
+
+[ generate sbox
+
+    static const u8 m1[8][8] = {					// S1 (AES) linear transform 
+      { 1, 0, 0, 0, 1, 1, 1, 1 },
+      { 1, 1, 0, 0, 0, 1, 1, 1 },
+      { 1, 1, 1, 0, 0, 0, 1, 1 },
+      { 1, 1, 1, 1, 0, 0, 0, 1 },
+      { 1, 1, 1, 1, 1, 0, 0, 0 },
+      { 0, 1, 1, 1, 1, 1, 0, 0 },
+      { 0, 0, 1, 1, 1, 1, 1, 0 },
+      { 0, 0, 0, 1, 1, 1, 1, 1 }
+    };
+
+    static
+    u8 matmul8(u8 x, const u8 m[8][8])
+    {
+      int i, j;
+      u8 y;
+      
+      y = 0;
+      for (i = 0; i < 8; i++) {
+        if (x & (1 << i)) {
+          for (j = 0; j < 8; j++)
+            y ^= m[j][i] << j;
+        }
+      }
+      return y;
+    }
+    
+    int i, x, j;
+    u8 gf_log[256], gf_exp[256];
+    
+    x = 1;
+    for (i = 0; i < 256; i++) {				// exp and log in GF(2^8)
+      gf_exp[i] = x;
+      gf_log[x] = i;
+      x ^= x << 1;
+      if (x & 0x100)
+        x ^= 0x11B;						// irreducible polynomial
+    }	
+  
+    for (i = 0; i < 256; i++) {
+      x = i;
+      if (x > 1)
+      x = gf_exp[ 255 - gf_log[x] ];	// x^-1
+      sbox[i] = matmul8(x, m1) ^ 0x63;
+    }
+    
+[ Inverse using sbox.
+ 
+      for (i=0; i<256; i++) {
+        sbox_inv[sbox[i]] = i;
+      }
+      

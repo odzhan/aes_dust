@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>AES-128 Source Audit Report</title>
+<style>
+  body { font-family: Arial, sans-serif; color: #111; margin: 24px; line-height: 1.4; }
+  h1, h2, h3 { margin: 0.6em 0 0.2em; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; }
+  .sev-high { color: #a40000; font-weight: bold; }
+  .sev-med { color: #b36b00; font-weight: bold; }
+  .sev-low { color: #2b5fab; font-weight: bold; }
+  .sev-info { color: #555; font-weight: bold; }
+  code { background: #f8f8f8; padding: 0 4px; }
+  .file { white-space: nowrap; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+</style>
+</head>
+<body>
+<h1>AES-128 Source Audit Report</h1>
+<p><strong>Scope:</strong> Manual review of <code>src/*.c</code> (excluding anything under <code>compact/</code>).</p>
+<p><strong>Date:</strong> 2026-01-26</p>
+<p><strong>Goal priorities:</strong> size, correctness, memory safety/UB, endianness/alignment portability, security properties.</p>
+
+<h2>1) Inventory: primitives, APIs, and dataflow</h2>
+<table>
+  <tr>
+    <th>File</th>
+    <th>Public API</th>
+    <th>Core primitive(s)</th>
+    <th>Dataflow</th>
+  </tr>
+  <tr>
+    <td class="file">src/aes128_ecb.c</td>
+    <td><code>aes128_init_ctx</code>, <code>aes128_set_key</code>, <code>aes128_set_iv</code>, <code>aes128_ecb_encrypt</code>, <code>aes128_ecb_decrypt</code></td>
+    <td>AES-128 key schedule, S-box, ECB block</td>
+    <td>Key → round keys; block → SubBytes/ShiftRows/MixColumns → block</td>
+  </tr>
+  <tr>
+    <td class="file">src/aes128_cbc.c</td>
+    <td><code>aes128_cbc_encrypt</code>, <code>aes128_cbc_decrypt</code></td>
+    <td>AES-ECB + XOR chaining</td>
+    <td>IV in ctx → XOR with block → ECB → update IV</td>
+  </tr>
+  <tr>
+    <td class="file">src/aes128_cfb.c</td>
+    <td><code>aes128_cfb_encrypt</code>, <code>aes128_cfb_decrypt</code></td>
+    <td>AES-ECB + CFB-128</td>
+    <td>IV → ECB keystream → XOR → feedback ciphertext</td>
+  </tr>
+  <tr>
+    <td class="file">src/aes128_ofb.c</td>
+    <td><code>aes128_ofb_encrypt</code>, <code>aes128_ofb_decrypt</code></td>
+    <td>AES-ECB + OFB</td>
+    <td>IV → ECB keystream → XOR → feedback keystream</td>
+  </tr>
+  <tr>
+    <td class="file">src/aes128_ctr.c</td>
+    <td><code>aes128_ctr_set</code>, <code>aes128_ctr_encrypt</code>, <code>aes128_ctr_decrypt</code></td>
+    <td>AES-ECB + CTR</td>
+    <td>Nonce in ctx → counter (last 32 bits BE) → ECB keystream → XOR</td>
+  </tr>
+  <tr>
+    <td class="file">src/aes128_xts.c</td>
+    <td><code>aes128_xts_encrypt</code>, <code>aes128_xts_decrypt</code></td>
+    <td>AES-ECB + XTS tweak multiply</td>
+    <td>Tweak → ECB (tweak key) → GF mul x each block → XOR pre/post ECB</td>
+  </tr>
+  <tr>
+    <td class="file">src/aes128_gcm.c</td>
+    <td><code>aes128_gcm_encrypt</code>, <code>aes128_gcm_decrypt</code></td>
+    <td>AES-CTR + GHASH</td>
+    <td>Key → H; IV → J0; CTR → ciphertext; GHASH → tag</td>
+  </tr>
+  <tr>
+    <td class="file">src/aes128_ccm.c</td>
+    <td><code>aes128_ccm_encrypt</code>, <code>aes128_ccm_decrypt</code></td>
+    <td>CBC-MAC + CTR</td>
+    <td>B0/A0 build → CBC-MAC → tag; CTR → ciphertext</td>
+  </tr>
+  <tr>
+    <td class="file">src/aes128_eax.c</td>
+    <td><code>aes128_eax_encrypt</code>, <code>aes128_eax_decrypt</code></td>
+    <td>OMAC/CMAC + CTR</td>
+    <td>OMAC(nonce/aad/cipher) → tag; CTR → ciphertext</td>
+  </tr>
+  <tr>
+    <td class="file">src/aes128_gcm_siv.c</td>
+    <td><code>aes128_gcm_siv_encrypt</code>, <code>aes128_gcm_siv_decrypt</code></td>
+    <td>POLYVAL + AES-CTR + KDF</td>
+    <td>KDF(key, nonce) → H,K; POLYVAL → tag; CTR(tag) → ciphertext</td>
+  </tr>
+</table>
+
+<h2>2) Memory safety, UB, strict-aliasing, alignment</h2>
+<table>
+  <tr><th>Area</th><th>Status</th><th>Notes / Recommendations (size-optimized)</th></tr>
+  <tr>
+    <td>AES core block/key access</td>
+    <td class="sev-info">Fixed</td>
+    <td>Uses explicit little-endian pack/unpack; avoids unaligned access and strict-aliasing UB.</td>
+  </tr>
+  <tr>
+    <td>Pointer validation</td>
+    <td class="sev-info">Caller-responsibility</td>
+    <td>No NULL checks; recommend documenting that all pointers must be valid and non-overlapping where required.</td>
+  </tr>
+  <tr>
+    <td>Length vs buffer size</td>
+    <td class="sev-info">Caller-responsibility</td>
+    <td>Functions assume the caller-provided length matches allocated buffer size.</td>
+  </tr>
+  <tr>
+    <td>Counter wrap</td>
+    <td class="sev-info">Fixed</td>
+    <td>CTR precheck uses 64-bit math; AEAD CTR loops detect or precheck wrap.</td>
+  </tr>
+</table>
+
+<h2>3) Endianness assumptions audit</h2>
+<table>
+  <tr><th>Component</th><th>Endianness</th><th>Assessment</th></tr>
+  <tr>
+    <td>AES core rounds</td>
+    <td>Little-endian word pack/unpack</td>
+    <td>Now explicit and portable across BE/LE hosts.</td>
+  </tr>
+  <tr>
+    <td>CTR (src/aes128_ctr.c)</td>
+    <td>Counter is last 32 bits big-endian</td>
+    <td>Matches SP800-38A CTR layout (96-bit nonce + 32-bit BE counter).</td>
+  </tr>
+  <tr>
+    <td>GCM GHASH + lengths</td>
+    <td>Big-endian</td>
+    <td>Length block uses 64-bit BE bit lengths per SP800-38D.</td>
+  </tr>
+  <tr>
+    <td>GCM-SIV POLYVAL + lengths</td>
+    <td>Little-endian</td>
+    <td>POLYVAL uses LE; length block uses LE bit lengths per RFC 8452.</td>
+  </tr>
+  <tr>
+    <td>XTS tweak GF</td>
+    <td>Little-endian</td>
+    <td>Multiply-by-x is LE (tweak[0]^=0x87 on carry), consistent with common IEEE 1619 vectors.</td>
+  </tr>
+  <tr>
+    <td>CCM length encoding</td>
+    <td>Big-endian length field in B0/A0</td>
+    <td>Correct for CCM (Q = L bytes, big-endian length).</td>
+  </tr>
+</table>
+
+<h2>4) Side-channel audit</h2>
+<table>
+  <tr><th>Area</th><th>Constant-time?</th><th>Notes</th></tr>
+  <tr>
+    <td>AES S-box/table lookups</td>
+    <td class="sev-low">No</td>
+    <td>Table lookups are data-dependent (cache timing risk).</td>
+  </tr>
+  <tr>
+    <td>GHASH/POLYVAL</td>
+    <td class="sev-low">No</td>
+    <td>Branching on internal state bits; not constant-time.</td>
+  </tr>
+  <tr>
+    <td>Tag comparisons</td>
+    <td class="sev-info">Yes</td>
+    <td>GCM/EAX/GCM-SIV use constant-time compare; CCM uses constant-time OR aggregation.</td>
+  </tr>
+</table>
+
+<h2>5) KATs and differential testing plan</h2>
+<p><strong>KAT sources:</strong> NIST SP800-38A (ECB/CBC/CFB/OFB/CTR), SP800-38D (GCM), IEEE 1619 (XTS), RFC 8452 (GCM-SIV).</p>
+<ul>
+  <li><strong>ECB/CBC/CFB/OFB/CTR:</strong> test vectors already present in <code>test.c</code> align with SP800-38A examples. Keep these as KATs.</li>
+  <li><strong>GCM:</strong> existing test vector in <code>test.c</code> aligns with SP800-38D; add an empty-plaintext/AAD KAT for tag-only validation.</li>
+  <li><strong>XTS:</strong> existing vectors align with IEEE 1619; add a 1-block and 2-block vector without zero padding to cover tweak progression.</li>
+  <li><strong>GCM-SIV:</strong> RFC 8452 vectors #1/#2 already in <code>test.c</code>; add at least one with AAD.</li>
+</ul>
+
+<p><strong>Differential tests vs OpenSSL (where supported):</strong></p>
+<ul>
+  <li>ECB/CBC/CFB/OFB/CTR: use <span class="mono">openssl enc -aes-128-ecb/-cbc/-cfb/-ofb/-ctr</span> with <span class="mono">-K</span>, <span class="mono">-iv</span>, <span class="mono">-nopad</span>, <span class="mono">-nosalt</span>.</li>
+  <li>GCM/CCM/XTS: use OpenSSL EVP or CLI if your build exposes these ciphers (OpenSSL 3.x typically does).</li>
+  <li>EAX/GCM-SIV: if OpenSSL does not expose these, compare against a known-good library (e.g., PyCA cryptography / pycryptodome) for differential tests.</li>
+</ul>
+
+<h2>6) Sanitizers and fuzzing (size-optimized harnesses)</h2>
+<p><strong>Sanitizer builds (clang):</strong></p>
+<pre><code>clang -std=c99 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
+  -Iinclude src/*.c test.c -o aes_asan
+</code></pre>
+
+<p><strong>Fuzz harness template per mode:</strong></p>
+<pre><code>// Minimal libFuzzer-style harness (example for CTR)
+int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
+    if (size &lt; 32) return 0;
+    aes128_ctx ctx;
+    aes128_init_ctx(&ctx);
+    aes128_set_key(&ctx, (void*)data);          // first 16 bytes
+    aes128_ctr_set(&ctx, data + 16);            // next 12 bytes
+    uint8_t *buf = malloc(size - 28);
+    if (!buf) return 0;
+    memcpy(buf, data + 28, size - 28);
+    aes128_ctr_encrypt(&ctx, buf, (uint32_t)(size - 28));
+    aes128_ctr_decrypt(&ctx, buf, (uint32_t)(size - 28));
+    free(buf);
+    return 0;
+}
+</code></pre>
+<p><strong>Boundary cases to fuzz:</strong> zero length, 1 byte, 15/16/17 bytes, max block counts near counter wrap, invalid nonce sizes (CCM), odd tag lengths, non-block multiples for CBC/CFB/XTS.</p>
+
+<h2>7) Prioritized findings and patch recommendations</h2>
+<table>
+  <tr><th>Priority</th><th>Finding</th><th>Recommendation (size-optimized)</th></tr>
+  <tr>
+    <td class="sev-low">Low</td>
+    <td>Table-based AES and GHASH/POLYVAL are not constant-time</td>
+    <td>If side-channel resistance is required, switch to constant-time AES or hardware AES; otherwise document the threat model.</td>
+  </tr>
+</table>
+
+<h2>Appendix: current status</h2>
+<ul>
+  <li>Endianness/alignment portability: addressed in AES core via pack/unpack.</li>
+  <li>Counter wrap detection: enforced in CTR-based modes.</li>
+  <li>AEAD decrypt behavior: plaintext is not left behind on tag mismatch.</li>
+</ul>
+</body>
+</html>
