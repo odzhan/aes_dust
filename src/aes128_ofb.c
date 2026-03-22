@@ -35,7 +35,8 @@
  * @param len   Number of bytes in the data buffer.
  */
 void aes128_ofb_encrypt(aes128_ctx *c, void *data, uint32_t len) {
-    uint8_t i, r, t[AES_BLK_LEN], * p = data, *iv = c->iv;
+    uint32_t i, r;
+    uint8_t t[AES_BLK_LEN], * p = data, *iv = c->iv;
 
     // copy IV to local buffer
     for (i = 0; i < AES_BLK_LEN; i++)t[i] = iv[i];
@@ -54,30 +55,6 @@ void aes128_ofb_encrypt(aes128_ctx *c, void *data, uint32_t len) {
     // update iv in context
     for (i = 0; i < AES_BLK_LEN; i++) c->iv[i] = iv[i];
 }
-/**
-bool aes128_ofb_crypt(aes128_ctx *c, void *data, size_t len) {
-    uint8_t t[AES_BLK_LEN];
-    uint8_t *p = (uint8_t*)data;
-
-    // Initialize keystream state from IV
-    for (size_t i = 0; i < AES_BLK_LEN; i++) t[i] = c->iv[i];
-
-    while (len) {
-        // Generate next 16 bytes of keystream
-        aes128_ecb_encrypt(c, t);
-
-        size_t r = len > AES_BLK_LEN ? AES_BLK_LEN : len;
-        for (size_t i = 0; i < r; i++) p[i] ^= t[i];
-
-        p   += r;
-        len -= r;
-    }
-
-    // Carry the updated OFB state
-    for (size_t i = 0; i < AES_BLK_LEN; i++) c->iv[i] = t[i];
-    return true;
-}
-*/
 /**
  * Decrypt data in-place using AES-128 in Output Feedback (OFB) mode.
  * OFB mode encryption and decryption are identical operations.

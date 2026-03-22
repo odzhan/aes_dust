@@ -75,10 +75,12 @@ int aes128_ctr_encrypt(aes128_ctx* c, void* data, uint32_t len) {
     }
 
     uint64_t blocks = ((uint64_t)len + AES_BLK_LEN - 1) / AES_BLK_LEN;
-    uint8_t ctr_tmp[AES_BLK_LEN];
-    memcpy(ctr_tmp, c->ctr, AES_BLK_LEN);
-    for (uint64_t b = 0; b < blocks; b++) {
-        if (!ctr32_inc_be(ctr_tmp)) {
+    {
+        uint32_t ctr_val = ((uint32_t)c->ctr[12] << 24) |
+                           ((uint32_t)c->ctr[13] << 16) |
+                           ((uint32_t)c->ctr[14] << 8)  |
+                           ((uint32_t)c->ctr[15]);
+        if (blocks > 0x100000000ULL - (uint64_t)ctr_val) {
             return 0;
         }
     }
@@ -125,40 +127,3 @@ int aes128_ctr_decrypt(aes128_ctx* c, void* data, uint32_t len) {
     return aes128_ctr_encrypt(c, data, len);
 }
 
-/**
-void aes128_ctr_set(aes128_ctx* c, const void* nonce12) {
-    memset(c->ctr, 0, AES_BLK_LEN);
-    memcpy(c->ctr, nonce12, 12); // 96-bit nonce; counter is c->ctr[12..15] (big-endian)
-}
-
-static inline int ctr32_inc_be(uint8_t ctr[16]) {
-    for (int i = 15; i >= 12; i--) {
-        ctr[i]++;
-        if (ctr[i] != 0) return 1;   // no carry: ok
-    }
-    return 0; // overflow (all four bytes wrapped)
-}
-
-int aes128_ctr_encrypt(aes128_ctx* c, void* data, size_t len) {
-    uint8_t keystream[AES_BLK_LEN];
-    uint8_t *p = (uint8_t*)data;
-
-    while (len) {
-        memcpy(keystream, c->ctr, AES_BLK_LEN);
-        aes128_ecb_encrypt(c, keystream);
-
-        size_t n = len > AES_BLK_LEN ? AES_BLK_LEN : len;
-        for (size_t i = 0; i < n; i++) p[i] ^= keystream[i];
-
-        p += n;
-        len -= n;
-
-        if (!ctr32_inc_be(c->ctr)) return 0; // counter exhausted
-    }
-    return 1;
-}
-
-int aes128_ctr_decrypt(aes128_ctx* c, void* data, size_t len) {
-    return aes128_ctr_encrypt(c, data, len);
-}
-*/

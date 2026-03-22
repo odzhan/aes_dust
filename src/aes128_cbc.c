@@ -73,7 +73,9 @@ int aes128_cbc_encrypt(aes128_ctx* c, void* data, uint32_t len) {
  * @param len   Length in bytes of the data buffer (must be a multiple of AES_BLK_LEN).
  */
 int aes128_cbc_decrypt(aes128_ctx* c, void* data, uint32_t len) {
-    uint8_t i, tmp[AES_BLK_LEN], *buf = (uint8_t*)data, *iv = c->iv;
+    uint32_t i;
+    uint8_t tmp[AES_BLK_LEN];
+    uint8_t *buf = (uint8_t*)data;
 
     if (len == 0) {
         return 1;
@@ -83,18 +85,17 @@ int aes128_cbc_decrypt(aes128_ctx* c, void* data, uint32_t len) {
     }
 
     while (len >= AES_BLK_LEN) {
-        // Copy ciphertext to local buffer.
-        for (i = 0; i<AES_BLK_LEN; i++) tmp[i] = buf[i];
+        // Save ciphertext before decrypting in-place.
+        for (i = 0; i < AES_BLK_LEN; i++) tmp[i] = buf[i];
         // Decrypt ciphertext.
         aes128_ecb_decrypt(c, buf);
-        // XOR the result with IV or last ciphertext.
-        for (i = 0; i < AES_BLK_LEN; i++) buf[i] ^= iv[i];
-        // Update length, IV and position.
+        // XOR with the stored IV (previous ciphertext or initial IV).
+        for (i = 0; i < AES_BLK_LEN; i++) buf[i] ^= c->iv[i];
+        // Advance: current ciphertext becomes next IV.
+        for (i = 0; i < AES_BLK_LEN; i++) c->iv[i] = tmp[i];
         len -= AES_BLK_LEN;
-        iv = tmp;
         buf += AES_BLK_LEN;
     }
-    for (i=0; i<AES_BLK_LEN; i++) c->iv[i] = iv[i];
     return 1;
 }
 

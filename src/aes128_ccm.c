@@ -173,9 +173,10 @@ static void ccm_build_a0(uint8_t a0[AES_BLK_LEN], const uint8_t *nonce, uint32_t
 }
 
 static int ct_eq_tag(const uint8_t *a, const uint8_t *b, uint32_t len) {
-    uint8_t d = 0;
-    for (uint32_t i = 0; i < len; i++) d |= (uint8_t)(a[i] ^ b[i]);
-    return d == 0;
+    uint32_t d = 0;
+    for (uint32_t i = 0; i < len; i++) d |= (uint32_t)(a[i] ^ b[i]);
+    d = (d | (uint32_t)(-(int32_t)d)) >> 31;
+    return 1 ^ (int)d;
 }
 
 int aes128_ccm_encrypt(const uint8_t *key, uint32_t key_len, const uint8_t *nonce, uint32_t nonce_len,
@@ -193,7 +194,7 @@ int aes128_ccm_encrypt(const uint8_t *key, uint32_t key_len, const uint8_t *nonc
     uint8_t T[AES_BLK_LEN];
 
     aes128_init_ctx(&ctx);
-    aes128_set_key(&ctx, (void*)key);
+    aes128_set_key(&ctx, key);
 
     ccm_build_b0(b0, nonce_len, tag_len, nonce, plain_len, aad_len != 0);
     ccm_mac_block(&ctx, y, b0);
@@ -234,7 +235,7 @@ int aes128_ccm_decrypt(const uint8_t *key, uint32_t key_len, const uint8_t *nonc
     uint8_t tag_calc[AES_BLK_LEN];
 
     aes128_init_ctx(&ctx);
-    aes128_set_key(&ctx, (void*)key);
+    aes128_set_key(&ctx, key);
 
     ccm_build_a0(a0, nonce, nonce_len);
     memcpy(s0, a0, AES_BLK_LEN);

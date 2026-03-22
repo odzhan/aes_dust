@@ -68,7 +68,7 @@ void aes128_init_ctx(aes128_ctx* c) {
     }
 }
 
-void aes128_set_iv(aes128_ctx* c, void* iv) {
+void aes128_set_iv(aes128_ctx* c, const void* iv) {
     memcpy(c->iv, iv, AES_IV_LEN);
 }
 
@@ -77,11 +77,11 @@ void aes128_set_iv(aes128_ctx* c, void* iv) {
  * Creates round keys for AES-128 encryption.
  * This should be called after aes128_init_ctx() and before any encryption.
  */
-void aes128_set_key(aes128_ctx* c, void* key) {
+void aes128_set_key(aes128_ctx* c, const void* key) {
     uint32_t i, w;
     aes_key_t k;
     aes_key_t *rk = (aes_key_t*)c->rkeys;
-    uint8_t *mk = (uint8_t*)key;
+    const uint8_t *mk = (const uint8_t*)key;
     
     /* Copy master key (16 bytes = 4 words) into local buffer */
     for (i = 0; i < 4; i++) {

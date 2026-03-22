@@ -25,10 +25,7 @@ CMAKE_FLAGS := \
   -DBUILD_TESTING=$(BUILD_TESTING) \
   -DBUILD_SHARED_LIBS=$(SHARED)
 
-.PHONY: help all configure build test install clean distclean \
-        preset-release preset-debug preset-vs2022 \
-        build-release build-debug build-vs2022 \
-        test-release test-debug compact
+.PHONY: help all configure build test install clean distclean
 
 help:
 	@echo "Targets:"
@@ -39,15 +36,6 @@ help:
 	@echo "  make install          - Install to PREFIX=$(PREFIX)"
 	@echo "  make clean            - Clean via the generated build tool"
 	@echo "  make distclean        - Remove $(BUILD_DIR) and the install tree"
-	@echo ""
-	@echo "Preset shortcuts (require CMakePresets.json):"
-	@echo "  make preset-release   - cmake --preset ninja-release"
-	@echo "  make build-release    - cmake --build --preset build-release"
-	@echo "  make test-release     - ctest --preset test-release"
-	@echo "  make preset-debug     - cmake --preset ninja-debug"
-	@echo "  make build-debug      - cmake --build --preset build-debug"
-	@echo "  make test-debug       - ctest --preset test-debug"
-	@echo "  make preset-vs2022    - cmake --preset vs2022"
 	@echo ""
 	@echo "Variables:"
 	@echo "  BUILD_TYPE  (Release|Debug|RelWithDebInfo|MinSizeRel)"
@@ -81,26 +69,3 @@ clean:
 distclean:
 	$(CMAKE) -E rm -rf "$(BUILD_DIR)" "$(PREFIX)"
 
-preset-release:
-	$(CMAKE) --preset ninja-release
-
-build-release:
-	$(CMAKE) --build --preset build-release --parallel
-
-test-release:
-	$(CTEST) --preset test-release --output-on-failure
-
-preset-debug:
-	$(CMAKE) --preset ninja-debug
-
-build-debug:
-	$(CMAKE) --build --preset build-debug --parallel
-
-test-debug:
-	$(CTEST) --preset test-debug --output-on-failure
-
-preset-vs2022:
-	$(CMAKE) --preset vs2022
-
-compact:
-	$(MAKE) -C src/compact

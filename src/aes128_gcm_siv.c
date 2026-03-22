@@ -140,7 +140,7 @@ static void gcm_siv_derive(const uint8_t *key, const uint8_t *nonce,
     uint8_t block[AES_BLK_LEN];
 
     aes128_init_ctx(ctx);
-    aes128_set_key(ctx, (void*)key);
+    aes128_set_key(ctx, key);
 
     for (uint32_t i = 0; i < 4; i++) {
         block[0] = (uint8_t)(i & 0xFF);
@@ -209,7 +209,7 @@ int aes128_gcm_siv_encrypt(const uint8_t *key, uint32_t key_len, const uint8_t *
     uint8_t s[AES_BLK_LEN];
 
     gcm_siv_derive(key, nonce, h, k, &ctx);
-    aes128_set_key(&ctx, (void*)k);
+    aes128_set_key(&ctx, k);
 
     polyval_hash(s, h, aad, aad_len, plain, plain_len);
     for (uint32_t i = 0; i < 12; i++) {
@@ -244,7 +244,7 @@ int aes128_gcm_siv_decrypt(const uint8_t *key, uint32_t key_len, const uint8_t *
     uint8_t calc[AES_BLK_LEN];
 
     gcm_siv_derive(key, nonce, h, k, &ctx);
-    aes128_set_key(&ctx, (void*)k);
+    aes128_set_key(&ctx, k);
 
     if (crypt_len) {
         if (!gcm_siv_ctr_ok(crypt_len, tag)) {

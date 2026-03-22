@@ -61,7 +61,7 @@ static int ct_eq16(const uint8_t a[16], const uint8_t b[16]) {
     uint32_t d = 0;
     for (int i = 0; i < 16; i++) d |= (uint32_t)(a[i] ^ b[i]);
     /* reduce to 0/1 without branches */
-    d = (d | -d) >> 31;
+    d = (d | (uint32_t)(-(int32_t)d)) >> 31;
     return 1 ^ (int)d; // 1 if equal, 0 if not
 }
 
@@ -199,7 +199,7 @@ static void aes_gctr(void *ctx, const uint8_t *icb, const uint8_t *x, uint32_t x
 static void aes_encrypt_init(aes128_ctx *ctx, const uint8_t *key, uint32_t key_len) {
     (void)key_len;
     aes128_init_ctx(ctx);
-    aes128_set_key(ctx, (void *)key);
+    aes128_set_key(ctx, key);
 }
 
 /* Initialize the hash subkey H for GCM.

@@ -103,10 +103,10 @@ void
 aes128_init_ctx(aes128_ctx*);
 
 void
-aes128_set_iv(aes128_ctx*, void*);
+aes128_set_iv(aes128_ctx*, const void*);
 
 void
-aes128_set_key(aes128_ctx*, void*);
+aes128_set_key(aes128_ctx*, const void*);
 
 void 
 aes128_ecb_encrypt(aes128_ctx*, void*);

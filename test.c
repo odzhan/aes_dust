@@ -139,9 +139,9 @@ static void aes_monte_carlo_ofb(void)
     }
 
     print_hex("Expected", mct_ofb_cipher, sizeof mct_ofb_cipher);
-    print_hex("Got     ", mct_ofb_cipher, sizeof mct_ofb_cipher);
+    print_hex("Got     ", last_ct, sizeof last_ct);
     printf("MCT OFB : %s\n",
-           memcmp(mct_ofb_cipher, mct_ofb_cipher, sizeof mct_ofb_cipher)
+           memcmp(mct_ofb_cipher, last_ct, sizeof mct_ofb_cipher)
               ? "FAILED" : "OK");
 }
 
@@ -261,9 +261,9 @@ static void aes_monte_carlo_cbc(void)
     }
 
     print_hex("Expected", mct_cbc_cipher, sizeof mct_cbc_cipher);
-    print_hex("Got     ", mct_cbc_cipher, sizeof mct_cbc_cipher);
+    print_hex("Got     ", last_ct, sizeof last_ct);
     printf("MCT CBC : %s\n",
-           memcmp(mct_cbc_cipher, mct_cbc_cipher, sizeof mct_cbc_cipher)
+           memcmp(mct_cbc_cipher, last_ct, sizeof mct_cbc_cipher)
               ? "FAILED" : "OK");
 }
 
@@ -1172,17 +1172,18 @@ static int lightmac_tamper_fuzz_test(void)
  * ================================================================*/
 int main(void)
 {
-    ecb_test();
-    cbc_test();      aes_monte_carlo_cbc();
-    cfb_test();
-    ofb_test();      aes_monte_carlo_ofb();
-    ctr_test();
-    xts_test();
-    eax_test();
-    ccm_test();
-    gcm_siv_test();
-    gcm_test();
-    lightmac_test();
-    lightmac_tamper_fuzz_test();
-    return 0;
+    int rc = 0;
+    rc |= ecb_test();
+    rc |= cbc_test();      aes_monte_carlo_cbc();
+    rc |= cfb_test();
+    rc |= ofb_test();      aes_monte_carlo_ofb();
+    rc |= ctr_test();
+    rc |= xts_test();
+    rc |= eax_test();
+    rc |= ccm_test();
+    rc |= gcm_siv_test();
+    rc |= gcm_test();
+    rc |= lightmac_test();
+    rc |= lightmac_tamper_fuzz_test();
+    return rc;
 }

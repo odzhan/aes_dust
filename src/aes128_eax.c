@@ -169,7 +169,7 @@ int aes128_eax_encrypt(const uint8_t *key, uint32_t key_len, const uint8_t *nonc
     uint8_t n[AES_BLK_LEN], h[AES_BLK_LEN], c[AES_BLK_LEN];
 
     aes128_init_ctx(&ctx);
-    aes128_set_key(&ctx, (void*)key);
+    aes128_set_key(&ctx, key);
     cmac_subkeys(&ctx, k1, k2);
 
     omac_t(n, &ctx, k1, k2, 0, nonce, nonce_len);
@@ -202,7 +202,7 @@ int aes128_eax_decrypt(const uint8_t *key, uint32_t key_len, const uint8_t *nonc
     uint8_t n[AES_BLK_LEN], h[AES_BLK_LEN], c[AES_BLK_LEN], t[AES_BLK_LEN];
 
     aes128_init_ctx(&ctx);
-    aes128_set_key(&ctx, (void*)key);
+    aes128_set_key(&ctx, key);
     cmac_subkeys(&ctx, k1, k2);
 
     omac_t(n, &ctx, k1, k2, 0, nonce, nonce_len);
