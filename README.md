@@ -120,10 +120,6 @@ six core test entries and nine compact C configurations. Enabling
 `AES_DUST_TEST_DIFFERENTIAL` adds a sixteenth entry. Assembly tests run through
 the separate Makefile targets above.
 
-The GitHub Actions workflow runs Debug/Release C tests on Linux and Windows,
-Clang ASan/UBSan checks, independent AEAD comparisons, reproducible fixture
-generation, and x86-64 assembly tests on Linux and Windows.
-
 ### `aes_dust_vectors_test` — official KAT vectors and negative authentication tests
 
 | Mode | Test vectors | Extra checks |

@@ -25,8 +25,8 @@
   For more information, please refer to <http://unlicense.org/> */
   
 // AES-128 encryption for little-endian ARMv7-A, using Thumb-2.
-// 206 bytes of .text; no lookup table or literal pool.
-// s points to a word-aligned 32-byte block: plaintext followed by the key.
+// 220 bytes of .text; no lookup table or literal pool.
+// s points to 32 bytes at any byte alignment: plaintext followed by the key.
 // Encrypts the first 16 bytes in place, preserving the key and r0-r12.
 // Maximum stack usage: 104 bytes, including saved registers and helper calls.
 
@@ -40,11 +40,15 @@
     .thumb_func
 aes_ecb_asm:
     push    {r0-r12,lr}
-    // Loading the base register suppresses LDM writeback. Copy exactly 32 bytes.
-    ldm     r0, {r0-r7}
-    push    {r0-r7}
-    ldr     r0, [sp, #32]       // recover the saved input pointer
-    mov     r5, sp              // local state; local key starts at r5 + 16
+    sub     sp, sp, #32
+    mov     r5, sp              // aligned local state and key
+    movs    r2, #32
+.Lcopy:
+    // Byte accesses keep caller storage independent of ARM alignment settings.
+    subs    r2, #1
+    ldrb    r3, [r0, r2]
+    strb    r3, [r5, r2]
+    bne     .Lcopy
     movs    r4, #1              // round constant
     movs    r3, #27
     mov     r12, r3             // shared GF(2^8) reduction constant
@@ -60,8 +64,13 @@ aes_ecb_asm:
     ldr     r6, [r5, r2]
     ldr     r7, [r1, r2]
     eors    r6, r7
-    str     r6, [r0, r2]
-    adds    r2, #4
+    movs    r7, #4
+.Lstore:
+    strb    r6, [r0, r2]
+    lsrs    r6, r6, #8
+    adds    r2, #1
+    subs    r7, #1
+    bne     .Lstore
     cmp     r2, #16
     bne     .Lkey
 
