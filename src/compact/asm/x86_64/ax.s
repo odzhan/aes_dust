@@ -28,7 +28,7 @@
 # Default ECB: 210 bytes, table-free and slower. STATIC=1 selects the faster table.
 # DYNAMIC=1 is still accepted and takes precedence if both flags are defined.
 # WIN=1 selects Microsoft x64 arguments; otherwise use System V AMD64.
-# CTR=1 additionally exports aes_ctr/_aes_ctr.
+# CTR=1 exports aes_ctr/aes_ctr_encrypt and their underscore-prefixed aliases.
 # ECB input is 32 bytes: plaintext then key. The key and all GPRs are preserved.
 # Peak ECB stack, excluding the caller's return address: 152 bytes, or 128 STATIC.
 # The direction flag must be clear, as required by both calling conventions.
@@ -247,9 +247,13 @@ _aes_ecb_asm:
 .ifdef CTR
     .global aes_ctr
     .global _aes_ctr
+    .global aes_ctr_encrypt
+    .global _aes_ctr_encrypt
 
 # void aes_ctr(uint32_t len, void *ctr, void *data, const void *key);
 # The 16-byte counter is incremented in big-endian order after each block.
+aes_ctr_encrypt:
+_aes_ctr_encrypt:
 aes_ctr:
 _aes_ctr:
     push   rbx

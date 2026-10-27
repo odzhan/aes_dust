@@ -29,6 +29,7 @@
 # s[0..15] is plaintext (replaced by ciphertext); s[16..31] is the unchanged key.
 # All general-purpose registers are preserved. The direction flag must be clear.
 # Default ECB: 177 bytes, table-free; CTR=1 adds 67 bytes (244 bytes total).
+# CTR=1 exports aes_ctr/aes_ctr_encrypt and their underscore-prefixed aliases.
 # STATIC=1 selects the faster 399-byte table build (466 bytes with CTR).
 # DYNAMIC=1 remains accepted and overrides STATIC when both are defined.
 # The exponentiation S-box favors size over speed and is substantially slower.
@@ -223,10 +224,12 @@ aes_ecb_asm:
 
 .ifdef CTR
     .ifndef BIN
-      .global aes_ctr, _aes_ctr
+      .global aes_ctr, _aes_ctr, aes_ctr_encrypt, _aes_ctr_encrypt
     .endif
 
     # void aes_ctr(W len, B *ctr, B *in, B *key)
+_aes_ctr_encrypt:
+aes_ctr_encrypt:
 _aes_ctr:
 aes_ctr:
     pushad

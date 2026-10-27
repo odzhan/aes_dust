@@ -30,26 +30,6 @@
 #include <string.h>
 #include <stdint.h>
 
-#if defined(_MSC_VER)            /* any flavour of MSVC / clang‑cl */
-#   define ALIGN16 __declspec(align(16))
-
-#elif defined(__GNUC__) || defined(__clang__)
-        /*  GCC, Clang and their cousins (including ICC when –gcc‑compat)  */
-#   define ALIGN16 __attribute__((aligned(16)))
-
-#else
-    /*  C11/C++11 provide an intrinsic keyword; fall back to that if the
-        compiler is neither MSVC nor GCC/Clang but still understands it.   */
-#   if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
-#       define ALIGN16 _Alignas(16)
-#   elif defined(__cplusplus) && (__cplusplus >= 201103L)
-#       include <cstddef>         /* alignas */
-#       define ALIGN16 alignas(16)
-#   else
-#       error "ALIGN16: unknown compiler—please add alignment syntax here"
-#   endif
-#endif
-
 /* Pack 4 bytes (little-endian) into a 32-bit word */
 static inline uint32_t pack32(const uint8_t *p) {
     return ((uint32_t)p[0]) |

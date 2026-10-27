@@ -37,7 +37,7 @@
 ; Peak ECB stack excludes the caller's return slot: 136 bytes, or 104 STATIC.
 ; Flat binary: nasm -f bin -DBIN ax.asm -o ax.bin
 ; Win32 object: nasm -f win32 ax.asm -o ax.obj
-; Define CTR to additionally export aes_ctr/_aes_ctr with the existing four-argument API.
+; CTR exports aes_ctr/aes_ctr_encrypt and their underscore-prefixed aliases.
 ;
 ; Uses the reference's byte xtime, exponentiation, and indirect helper layout;
 ; MixColumns combines two rotations through ROR16(w ^ ROR8(w)).
@@ -224,10 +224,12 @@ aes_ecb:
 
 %ifdef CTR
     %ifndef BIN
-      global aes_ctr, _aes_ctr
+      global aes_ctr, _aes_ctr, aes_ctr_encrypt, _aes_ctr_encrypt
     %endif
 
     ; void aes_ctr(W len, B *ctr, B *in, B *key)
+_aes_ctr_encrypt:
+aes_ctr_encrypt:
 _aes_ctr:
 aes_ctr:
     pushad

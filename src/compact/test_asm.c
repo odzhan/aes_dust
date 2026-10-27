@@ -4,12 +4,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef ASM
+#define ASM 1
+#endif
+#include "aes.h"
 #include "test_asm_vectors.h"
 
-extern void aes_ecb_asm(void *block_and_key);
-#ifdef AES_ASM_CTR
-extern void aes_ctr(uint32_t len, void *counter, void *data, void *key);
-#endif
 #ifdef AES_ASM_ABI_PROBE
 extern void aes_test_abi_ecb(void *intended, void *decoy);
 #endif
@@ -71,7 +71,9 @@ static void message(uint8_t *data, uint32_t length)
     for (uint32_t i = 0; i < length; ++i) data[i] = (uint8_t)(i * 29U + 7U);
 }
 
-static int ctr_tests(void)
+typedef void (*ctr_function)(uint32_t, void *, void *, void *);
+
+static int ctr_tests(ctr_function crypt)
 {
     static const uint32_t lengths[] = {0, 1, 15, 16, 17, 255, 256, 257};
     uint8_t data[259], counter_storage[18], key_storage[18], expected_counter[16];
@@ -87,7 +89,7 @@ static int ctr_tests(void)
             memcpy(key, asm_ecb_keys[0], 16);
             memcpy(expected_counter, counter, 16);
             advance_counter(expected_counter, (length + 15U) / 16U);
-            aes_ctr(length, counter, data + 1, key);
+            crypt(length, counter, data + 1, key);
             CHECK(memcmp(data + 1, asm_ctr_cipher[v], length) == 0);
             CHECK(memcmp(counter, expected_counter, 16) == 0);
             CHECK(memcmp(key, asm_ecb_keys[0], 16) == 0);
@@ -96,7 +98,7 @@ static int ctr_tests(void)
             CHECK(key_storage[0] == 0xa5 && key_storage[17] == 0xa5);
             /* Restore the original counter for decryption. */
             memcpy(counter, asm_ctr_initial[v], 16);
-            aes_ctr(length, counter, data + 1, key);
+            crypt(length, counter, data + 1, key);
             for (uint32_t i = 0; i < length; ++i) CHECK(data[i + 1] == (uint8_t)(i * 29U + 7U));
             CHECK(memcmp(counter, expected_counter, 16) == 0);
         }
@@ -106,8 +108,8 @@ static int ctr_tests(void)
             message(data + 1, 257);
             memcpy(counter, asm_ctr_initial[v], 16);
             memcpy(key, asm_ecb_keys[0], 16);
-            aes_ctr(split, counter, data + 1, key);
-            aes_ctr(257 - split, counter, data + 1 + split, key);
+            crypt(split, counter, data + 1, key);
+            crypt(257 - split, counter, data + 1 + split, key);
             CHECK(memcmp(data + 1, asm_ctr_cipher[v], 257) == 0);
             memcpy(expected_counter, asm_ctr_initial[v], 16);
             advance_counter(expected_counter, 17);
@@ -125,7 +127,8 @@ int main(void)
     int failed = ecb_tests();
     if (failed) return failed;
 #ifdef AES_ASM_CTR
-    failed |= ctr_tests();
+    failed |= ctr_tests(aes_ctr);
+    failed |= ctr_tests(aes_ctr_encrypt);
 #endif
     if (!failed) puts("Assembly known-answer, ABI, and buffer/state regressions passed.");
     return failed;
