@@ -29,6 +29,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/atomic.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -88,38 +89,57 @@ void bin2hex(char *s, void *p, int len) {
     ser_print("\n");
 }
 
-uint64_t tick_ticks;
+#ifdef __AVR_ATmega128__
+#define TICK_FLAGS TIFR
+#define TICK_MASK TIMSK
+#else
+#define TICK_FLAGS TIFR1
+#define TICK_MASK TIMSK1
+#endif
+
+static volatile uint64_t tick_ticks;
 static uint8_t tick_init_done = 0;
 
 static void tick_init(void) {
-    tick_ticks = 0;
-#ifdef __AVR_ATmega128__
-    TCCR1B = (1 << CS12);
-    TIMSK |= (1 << TOIE1);
-#else
-    TCCR0B = (1 << CS00);
-    TCCR1B = (1 << CS12);
-    TIMSK1 |= (1 << TOIE1);
-#endif
-    TCNT0 = 0;
-    TCNT1 = 0;
-    sei(); // Enable global interrupts
-    tick_init_done = 1;
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        /* One unprescaled timer measures CPU cycles without a second clock. */
+        TCCR1B = 0;
+        TCCR1A = 0;
+        TCNT1 = 0;
+        tick_ticks = 0;
+        TICK_FLAGS = (1 << TOV1); /* Clear an old overflow (write one to clear). */
+        TICK_MASK |= (1 << TOIE1);
+        tick_init_done = 1;
+        TCCR1B = (1 << CS10);
+    }
 }
 
 // interrupt handler on TIMER1 overflow
 
 ISR(TIMER1_OVF_vect)
 {
-    tick_ticks += (1UL << 24);
+    tick_ticks += UINT64_C(65536);
 }
 
 unsigned long long tick_cycles(void)
 {
+    uint64_t cycles;
+    uint16_t counter;
+
     if (!tick_init_done)
         tick_init();
 
-    return tick_ticks | (((uint64_t) TCNT1) << 8) | ((uint64_t) TCNT0);
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        cycles = tick_ticks;
+        counter = TCNT1;
+        if (TICK_FLAGS & (1 << TOV1)) {
+            /* The timer wrapped before its ISR ran, possibly after our first
+             * counter read. Reread it in the new epoch; leave TOV1 for the ISR. */
+            cycles += UINT64_C(65536);
+            counter = TCNT1;
+        }
+    }
+    return cycles + counter;
 }
 
 int main (void) {
@@ -172,6 +192,7 @@ int main (void) {
   
     // time AES-128
     tick_init();
+    sei();
 
     for (run = 0; run < 10; run++) {
 
@@ -184,7 +205,7 @@ int main (void) {
             aes_ecb(key, data);
         }
         t = tick_cycles() - t;
-        t >>= run + 2;
+        t >>= run + 2; /* Average per block; one printed tick is four CPU cycles. */
 
         ser_dec64(t);
         ser_print(" ticks / block\n");

@@ -12,7 +12,7 @@ AR		= avr-ar
 STRIP		= avr-strip
 AVRDUDE		= avrdude
 
-CFLAGS  	= -DCTR -Wall -Ofast -mmcu=$(TARGET) -DF_CPU=$(CPUFREQ)
+CFLAGS  	= -std=c99 -DCTR -Wall -Ofast -mmcu=$(TARGET) -DF_CPU=$(CPUFREQ)
 
 OBJS 		= obj/aes.o
 
