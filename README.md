@@ -264,6 +264,13 @@ initial IV/nonce and a fresh or reset context.
 - GCM and GCM-SIV increment their 32-bit counters modulo 2^32. Crossing the
   numeric wrap boundary is valid; the API's `uint32_t` byte lengths are below
   each mode's message-length limit.
+- LightMAC requires two independent secret keys, generated independently or
+  derived with distinct labels using a suitable KDF. Identical key values return
+  `AES128_LIGHTMAC_BAD_PARAM` without changing the context or output tag.
+  Keep `s_bits` and `t_bits` fixed for each key pair. Unequal keys alone do not
+  guarantee independence. Previously accepted identical-key configurations
+  must use a new independent key pair; existing tags from those configurations
+  must be regenerated.
 - LightMAC processes every complete `16 - s_bits/8` byte block under K1 before
   padding the remaining suffix, including an empty suffix, for finalization.
   A successful `aes128_lightmac_final()` ends the message. Further valid

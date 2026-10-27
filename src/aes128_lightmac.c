@@ -89,6 +89,9 @@ int aes128_lightmac_init(aes128_lightmac_ctx *ctx, const uint8_t *k1, const uint
     if ((t_bits == 0) || (t_bits > 128) || (t_bits & 7)) {
         return AES128_LIGHTMAC_BAD_PARAM;
     }
+    if (memcmp(k1, k2, AES_KEY_LEN) == 0) {
+        return AES128_LIGHTMAC_BAD_PARAM;
+    }
 
     ctx->s_bits = s_bits;
     ctx->t_bits = t_bits;

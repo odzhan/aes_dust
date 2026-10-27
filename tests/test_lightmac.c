@@ -260,6 +260,49 @@ static int run_counter_limits(void)
     return 0;
 }
 
+static int run_key_contract(void)
+{
+    uint8_t same_key[16], different_key[16], tag[16], unchanged[16];
+    aes128_lightmac_ctx ctx, saved;
+
+    memcpy(same_key, lightmac_k1, sizeof same_key);
+    memset(&ctx, 0, sizeof ctx);
+    LM_CHECK(aes128_lightmac_init(&ctx, lightmac_k1, lightmac_k2,
+                                 64, 128) == AES128_LIGHTMAC_OK);
+    LM_CHECK(aes128_lightmac_update(&ctx, lm_msg_00, 1) == AES128_LIGHTMAC_OK);
+    memcpy(&saved, &ctx, sizeof saved);
+
+    /* Reject equal values even when the two keys occupy different buffers.
+     * A failed reinitialization must preserve the active message. */
+    for (int separate = 0; separate <= 1; ++separate) {
+        const uint8_t *k2 = separate ? same_key : lightmac_k1;
+        LM_CHECK(aes128_lightmac_init(&ctx, lightmac_k1, k2,
+                                     64, 128) == AES128_LIGHTMAC_BAD_PARAM);
+        LM_CHECK(memcmp(&ctx, &saved, sizeof ctx) == 0);
+        for (uint32_t len = 0; len <= 1; ++len) {
+            const uint8_t *msg = len ? lm_msg_00 : NULL;
+            memset(tag, 0xa5, sizeof tag);
+            memcpy(unchanged, tag, sizeof unchanged);
+            LM_CHECK(aes128_lightmac(tag, lightmac_k1, k2, 8, 128,
+                                    msg, len) == AES128_LIGHTMAC_BAD_PARAM);
+            LM_CHECK(memcmp(tag, unchanged, sizeof tag) == 0);
+            LM_CHECK(aes128_lightmac_verify(tag, lightmac_k1, k2, 8, 128,
+                                           msg, len) == AES128_LIGHTMAC_BAD_PARAM);
+        }
+    }
+    LM_CHECK(aes128_lightmac_final(&ctx, tag) == AES128_LIGHTMAC_OK);
+    LM_CHECK(memcmp(tag, lm_tag_s64_t128_00, sizeof tag) == 0);
+
+    /* Compare the entire key, including a difference in the final byte. */
+    for (size_t i = 0; i < sizeof different_key; ++i) {
+        memcpy(different_key, lightmac_k1, sizeof different_key);
+        different_key[i] ^= 1;
+        LM_CHECK(aes128_lightmac_init(&ctx, lightmac_k1, different_key,
+                                     64, 128) == AES128_LIGHTMAC_OK);
+    }
+    return 0;
+}
+
 static int run_lifecycle(void)
 {
     uint8_t tag[16], unchanged[16];
@@ -437,6 +480,7 @@ int main(int argc, char **argv)
         int rc = run_kat();
         rc |= run_boundaries();
         rc |= run_counter_limits();
+        rc |= run_key_contract();
         rc |= run_lifecycle();
         return rc;
     }

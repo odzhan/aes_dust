@@ -46,6 +46,12 @@ extern "C" {
  * - s_bits: counter length in bits (must be multiple of 8, 8..64)
  * - t_bits: tag length in bits (must be multiple of 8, 8..128)
  *
+ * K1 and K2 must be independent secret keys, generated independently or derived
+ * with distinct labels using a suitable KDF. Identical key values are rejected
+ * with BAD_PARAM. Inequality alone does not establish key independence.
+ * Keep s_bits and t_bits fixed for a key pair; do not modify context fields.
+ * Invalid init() arguments leave the context unchanged.
+ *
  * Messages must be shorter than 2^s_bits * (16 - s_bits / 8) bytes.
  * Every complete rate block is processed under K1; finalization pads the
  * remaining strictly shorter suffix, including an empty suffix.
@@ -56,8 +62,8 @@ extern "C" {
  */
 typedef struct _aes128_lightmac_ctx {
     aes128_ctx aes;         /* AES-128 context (sbox + round keys); initialized by aes128_init_ctx(). */
-    uint8_t k1[AES_KEY_LEN];/* K1 key bytes (16 bytes); caller provides any 16-byte value. */
-    uint8_t k2[AES_KEY_LEN];/* K2 key bytes (16 bytes); caller provides any 16-byte value. */
+    uint8_t k1[AES_KEY_LEN];/* Independent K1 key bytes (16 bytes); internal copy. */
+    uint8_t k2[AES_KEY_LEN];/* Independent K2 key bytes (16 bytes); internal copy. */
     uint8_t v[AES_BLK_LEN]; /* Accumulator V (16 bytes); internal state, do not modify directly. */
     uint8_t buf[AES_BLK_LEN];/* Pending message bytes; internal buffer. */
     uint8_t buf_len;        /* Bytes in buf; less than r_bytes after a successful update. */

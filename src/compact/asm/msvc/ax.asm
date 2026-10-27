@@ -26,7 +26,8 @@
 ;
 ;
 
-; AES-128 encryption, NASM 32-bit, cdecl: void aes_ecb(void *s).
+; AES-128 encryption, NASM 32-bit, cdecl: void aes_ecb_asm(void *s).
+; aes_ecb/_aes_ecb remain aliases for callers using the historic symbols.
 ; s[0..15] is plaintext, replaced by ciphertext; s[16..31] is the unchanged key.
 ; All general-purpose registers are preserved. The direction flag must be clear.
 ; Default ECB: 177 bytes, table-free. CTR=1 adds 67 bytes (244 bytes total).
@@ -52,10 +53,12 @@ bits 32
 
 %ifndef BIN
     section .text
-    global aes_ecb, _aes_ecb
+    global aes_ecb_asm, _aes_ecb_asm, aes_ecb, _aes_ecb
 
 %endif
 
+_aes_ecb_asm:
+aes_ecb_asm:
 _aes_ecb:
 aes_ecb:
     pushad
