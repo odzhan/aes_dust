@@ -1,0 +1,11 @@
+prefix=@AES_DUST_PC_PREFIX@
+exec_prefix=${prefix}
+libdir=@AES_DUST_PC_LIBDIR@
+includedir=@AES_DUST_PC_INCLUDEDIR@
+
+Name: aes_dust
+Description: Compact AES-128 modes library (ECB, CBC, OFB, CTR, GCM)
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -laes128
+Cflags: -I${includedir}
+

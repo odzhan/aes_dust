@@ -1,0 +1,3 @@
+# Independent reference implementations used by differential.py and generators.
+pycryptodomex==3.24.1
+cryptography==46.0.3

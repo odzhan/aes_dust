@@ -1,0 +1,70 @@
+# Ignore compiled files
+*.obj
+*.o
+*.exe
+*.dll
+*.pdb
+
+# Ignore precompiled header files
+*.pch
+
+# Ignore temporary files
+*.ncb
+*.suo
+*.sdf
+*.opensdf
+*.log
+
+# Ignore user-specific files
+*.user
+*.suo
+*.sln.docstates
+
+# Ignore Visual Studio project files
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.vcxproj.webinfo
+*.vspscc
+
+# Ignore Visual Studio IntelliCode files
+.vscode/
+
+# Ignore output directories
+Debug/
+Release/
+x64/
+x86/
+
+# Ignore NuGet package directory
+packages/
+
+# Ignore Resharper folders
+_ReSharper*/
+
+# Ignore user-specific files
+*.suo
+*.user
+*.userosscache
+
+# Ignore Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Ignore Windows folder config file
+Desktop.ini
+
+# Ignore Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Ignore Visual Studio Code folders
+.vscode/
+
+# Ignore custom build output directory
+CustomOutput/
+
+# Ignore .vs folder
+.vs/
+
+# Ignore CMake build directories
+build/
