@@ -35,7 +35,8 @@ extern "C" {
 
 /* Start a new message with a unique 12-byte nonce and counter zero. Discards
  * buffered bytes and clears exhaustion. To choose a different initial counter,
- * set c->ctr[12..15] (big-endian) immediately after this call, before use. */
+ * set c->ctr[12..15] (big-endian) immediately after this call, before use.
+ * nonce may be c->ctr itself, for example when resetting for decryption. */
 void aes128_ctr_set(aes128_ctx* c, const void* nonce);
 /* In-place streaming: arbitrary chunk boundaries preserve unused keystream.
  * Returns 1 on success, 0 if insufficient counter space; failure changes neither

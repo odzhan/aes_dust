@@ -47,10 +47,9 @@ static int ctr32_inc_be(uint8_t ctr[16]) {
  * @param nonce Pointer to the 12-byte nonce.
  */
 void aes128_ctr_set(aes128_ctx* c, const void* nonce) {
-    // Clear the entire 16-byte counter block.
-    memset(c->ctr, 0, AES_BLK_LEN);
-    // Copy the 12-byte nonce into the first 12 bytes.
-    memcpy(c->ctr, nonce, 12);
+    /* Preserve the input before resetting state, even when nonce is c->ctr. */
+    memmove(c->ctr, nonce, 12);
+    memset(c->ctr + 12, 0, AES_BLK_LEN - 12);
     c->ctr_used = AES_BLK_LEN;
     c->ctr_exhausted = 0;
 }

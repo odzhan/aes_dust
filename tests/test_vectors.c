@@ -416,6 +416,41 @@ static int stream_vectors(void) {
     return 0;
 }
 
+static int ctr_self_reset(void) {
+    const uint32_t used[] = {1, 16, 17, 1, 16};
+    const uint8_t zero_counter[4] = {0};
+    aes128_ctx ctx, reference;
+    uint8_t ciphertext[33], buf[33];
+
+    setup(&reference, cfb_key);
+    aes128_ctr_set(&reference, ctr_initial);
+    memcpy(ciphertext, cfb_plain, sizeof ciphertext);
+    CHECK(aes128_ctr_encrypt(&reference, ciphertext, sizeof ciphertext));
+
+    for (size_t i = 0; i < sizeof used / sizeof used[0]; i++) {
+        setup(&ctx, cfb_key);
+        aes128_ctr_set(&ctx, ctr_initial);
+        /* Also reset with final-block bytes buffered and after consuming them. */
+        if (i >= 3) memset(ctx.ctr + 12, 255, 4);
+        memcpy(buf, cfb_plain, sizeof buf);
+        CHECK(aes128_ctr_encrypt(&ctx, buf, used[i]));
+        if (i >= 3) CHECK(ctx.ctr_exhausted);
+
+        /* CTR retains the nonce, so it can supply its own reset input. */
+        aes128_ctr_set(&ctx, ctx.ctr);
+        CHECK(!memcmp(ctx.ctr, ctr_initial, 12));
+        CHECK(!memcmp(ctx.ctr + 12, zero_counter, sizeof zero_counter));
+        CHECK(ctx.ctr_used == AES_BLK_LEN);
+        CHECK(!ctx.ctr_exhausted);
+        memcpy(buf, ciphertext, sizeof buf);
+        CHECK(aes128_ctr_decrypt(&ctx, buf, 1));
+        CHECK(aes128_ctr_decrypt(&ctx, buf + 1, 16));
+        CHECK(aes128_ctr_decrypt(&ctx, buf + 17, 16));
+        CHECK(!memcmp(buf, cfb_plain, sizeof buf));
+    }
+    return 0;
+}
+
 /* Adapters keep the common AEAD checks independent of argument ordering. */
 enum mode { EAX, CCM, GCM, GCM_SIV };
 static int seal(enum mode m, const uint8_t *key, const uint8_t *nonce, uint32_t nl,
@@ -796,7 +831,7 @@ static int eax_wrap(void) {
 
 int main(void) {
     int rc=0;
-    rc |= block_vectors(); rc |= xts_limits(); rc |= stream_vectors();
+    rc |= block_vectors(); rc |= xts_limits(); rc |= stream_vectors(); rc |= ctr_self_reset();
     rc |= aead_vectors(); rc |= aead_regressions(); rc |= lightmac_vectors();
     rc |= gcm_empty_iv(); rc |= gcm_wrap(); rc |= gcm_siv_wrap();
     rc |= eax_wrap();

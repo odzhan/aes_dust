@@ -16,8 +16,8 @@ CFLAGS  	= -DCTR -Wall -Ofast -mmcu=$(TARGET) -DF_CPU=$(CPUFREQ)
 
 OBJS 		= obj/aes.o
 
-$(PROJ):	test.c ser_print.c obj/$(PROJ).a
-		$(CC) $(CFLAGS) $^ -o $@
+$(PROJ):	test.c ser_print.c obj/$(PROJ).a aes.h ser_print.h
+		$(CC) $(CFLAGS) $(filter %.c %.a,$^) -o $@
 
 %.hex:		%
 		$(OBJCOPY) -O ihex -R .eeprom $^ $@
@@ -25,9 +25,11 @@ $(PROJ):	test.c ser_print.c obj/$(PROJ).a
 obj/$(PROJ).a: 	$(OBJS)
 		$(AR) -ar cr $@ $^
 
+obj/aes.o:	aes.c aes.h
+
 obj/%.o: %.[cS]
 		mkdir -p obj/
-		$(CC) $(CFLAGS) -c $^ -o $@
+		$(CC) $(CFLAGS) -c $< -o $@
 
 obj/%.S: %.c
 		$(CC) $(CFLAGS) -S $^ -o $@
